@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/qrc"/>
+    <qresource prefix="/">
+        <file>dial.png</file>
+        <file>indicador.png</file>
+    </qresource>
+</RCC>
