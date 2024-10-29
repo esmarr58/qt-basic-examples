@@ -14,8 +14,8 @@
 const char* password = "1659884E";
 
 */
-const char* ssid = "TP-LINK_AB22";
-const char* password = "86804271";
+const char* ssid = "GWN571D04";
+const char* password = "ESP32CUCEI$$";
 
 // Configuración del servidor y WebSocket
 AsyncWebServer server(80);
