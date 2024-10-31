@@ -10,10 +10,7 @@
 #include <time.h>
 
 // Configura tus credenciales de WiFi
-/*const char* ssid = "TP-Link_Extender";
-const char* password = "1659884E";
 
-*/
 const char* ssid = "GWN571D04";
 const char* password = "ESP32CUCEI$$";
 
