@@ -3,7 +3,7 @@
 
 
 #include <WiFi.h>
-#include <DHT.h>
+#include <DHT.h>  //By adafruit 1.4.6 mas dependencias
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>  //By lacemra 3.1.0 con modificaciones
 #include <AsyncWebSocket.h>
