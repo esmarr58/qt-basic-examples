@@ -9,6 +9,7 @@ SOURCE_PATH="$QT_PATH/Src/qtbase/src/plugins/sqldrivers/mysql"
 # Update and install essential packages
 echo "Updating package list..."
 sudo apt update
+sudo apt upgrade
 
 # Remove MySQL libraries if installed
 echo "Removing MySQL library (libmysqlclient-dev) if it exists..."
