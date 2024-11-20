@@ -9,6 +9,7 @@
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>  //BenoitBlanchon
 #include <time.h>
+#include <ESP32Servo.h> //By Kevin Harrington v3.0.5
 
 #define DHTPIN 7       // Pin donde está conectado el sensor
 #define DHTTYPE DHT22  // Cambia a DHT11 si usas ese modelo
@@ -18,6 +19,8 @@
 const char* ssid = "GWN571D04";
 const char* password = "ESP32CUCEI$$";
 DHT dht(DHTPIN, DHTTYPE);
+Servo miServo;
+const int pinServo = 14;
 
 
 /*
@@ -109,6 +112,13 @@ void onWebSocketMessage(AsyncWebSocket *server, AsyncWebSocketClient *client, Aw
                     frenarMotores();
                     Serial.println("Paro");
                     
+                  }
+                  else if(comando == 7){
+                    int anguloServomotor  = doc["angulo"];
+                    miServo.write(anguloServomotor);
+                    Serial.print("Angulo: ");
+                    Serial.println(anguloServomotor);
+
                   }
                   else if(comando == 11) tiempoBlink = 1000;
                   else if(comando == 12) tiempoBlink = 500;
@@ -290,6 +300,7 @@ void setup() {
     frenarMotores();  
     dht.begin();
     SensorDistanciaSetup();
+    miServo.attach(pinServo);
 
    
 }
