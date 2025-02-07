@@ -30,7 +30,7 @@ sudo docker --version
 # 7. Agrega el usuario actual al grupo Docker (para no usar sudo)
 echo "Agregando el usuario actual al grupo Docker..."
 sudo usermod -aG docker $USER
-echo "Por favor, cierra la sesión y vuelve a iniciarla para que los cambios surtan efecto."
+echo "Por favor, reinicia la computadora para que los cambios surtan efecto."
 
 # 8. (Opcional) Configura Docker para que se inicie automáticamente
 echo "Configurando Docker para que se inicie automáticamente..."
