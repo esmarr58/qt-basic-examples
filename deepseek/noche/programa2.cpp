@@ -1,3 +1,7 @@
+/*
+g++ -Wall programa2.cpp -o abrirCamara `pkg-config --cflags --libs opencv4`
+
+    */
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
