@@ -1,3 +1,8 @@
+
+/*
+g++ -Wall programa4.cpp -o detectorCaras `pkg-config --cflags --libs opencv4` -lsfml-audio -lsfml-system
+
+    */
 #include <opencv2/opencv.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
