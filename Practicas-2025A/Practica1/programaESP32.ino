@@ -314,7 +314,7 @@ void loop() {
             deserializeJson(doc, mensajeJSON);
             
               
-              const char* dispositivo = doc["dispositivo"]
+              const char* dispositivo = doc["dispositivo"];
               if(strcmp(dispositivo, "foco") == 0){
                 int numeroPin = doc["pin"];  
                 int estadoPin = doc["estado"];
