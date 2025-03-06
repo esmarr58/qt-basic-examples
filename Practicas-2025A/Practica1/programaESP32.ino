@@ -18,7 +18,7 @@ JSON: 7.1.0
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <Arduino.h>
-#include <ESP32Servo.h>  // Librería compatible con ESP32
+#include <ESP32Servo.h>  // Kevin Harrington 3.0.5
 
 #define SERVO_PIN 14  // GPIO para la señal del servo
 Servo servoMotor;  // Objeto para el servomotor
