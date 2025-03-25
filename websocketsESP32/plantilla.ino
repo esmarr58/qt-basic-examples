@@ -50,11 +50,21 @@ void onWebSocketMessage(AsyncWebSocket *server, AsyncWebSocketClient *client, Aw
 }
 
 void tarea1(void *param){
+  while (1) {
+        // Mantén limpios los clientes inactivos del WebSocket
+        ws.cleanupClients();
+        vTaskDelay(10 / portTICK_PERIOD_MS);  // Pequeño retardo para no saturar el procesador
+
+
+  }
   
 }
 
 void tarea2(void *param){
-  
+  while(1)
+  {
+    delay(1000);
+  }
 }
 
 
