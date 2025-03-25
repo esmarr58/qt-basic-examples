@@ -1,3 +1,4 @@
+//Version 2
 #include <WiFi.h>
 //#include <DHT.h>  //By adafruit 1.4.6 mas dependencias
 #include <AsyncTCP.h>
