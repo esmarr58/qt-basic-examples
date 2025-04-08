@@ -160,6 +160,10 @@ void onWebSocketMessage(AsyncWebSocket *server, AsyncWebSocketClient *client, Aw
 
     // --- SENSOR ULTRASÓNICO ---
     else if (strcmp(tipo, "ultrasonico") == 0) {
+        int adcValue = analogRead(ADC_PIN);
+        double adcVoltage = (adcValue / 4095.0) * 3.3;  // Convertir a voltaje (0-3.3V)
+        double temperaturaLM35 = adcVoltage / 0.01;
+      
         float distancia = medirDistancia();
         Serial.print("Distancia medida: ");
         Serial.print(distancia);
@@ -168,6 +172,8 @@ void onWebSocketMessage(AsyncWebSocket *server, AsyncWebSocketClient *client, Aw
         DynamicJsonDocument doc(256);
         doc["type"] = "medicion_distancia";
         doc["distancia"] = distancia;
+        doc["lm35"] = temperaturaLM35;
+        doc["sensorID"] = "ESP32-IDX332S2";
 
         // Serializar el JSON y enviarlo
         String jsonString;
