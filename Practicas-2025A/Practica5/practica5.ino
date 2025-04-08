@@ -14,7 +14,7 @@
 
 //#define DHTPIN 7       // Pin donde está conectado el sensor
 //#define DHTTYPE DHT22  // Cambia a DHT11 si usas ese modelo
-#define ADC_PIN 8 
+#define ADC_PIN 16 
 
  #define tiempoAdelante 100
  #define tiempoAtras    100
@@ -159,21 +159,22 @@ void onWebSocketMessage(AsyncWebSocket *server, AsyncWebSocketClient *client, Aw
     }
 
     // --- SENSOR ULTRASÓNICO ---
-    else if (strcmp(tipo, "ultrasonico") == 0) {
-        int adcValue = analogRead(ADC_PIN);
-        double adcVoltage = (adcValue / 4095.0) * 3.3;  // Convertir a voltaje (0-3.3V)
-        double temperaturaLM35 = adcVoltage / 0.01;
-      
+    else if (strcmp(tipo, "mediciones") == 0) {
         float distancia = medirDistancia();
+
+        //Medir el LM35
+        double valorADC = analogRead(ADC_PIN);
+        double voltaje = (3.3/4095)*valorADC;
+        double temperatura = voltaje/0.01;
+        
         Serial.print("Distancia medida: ");
         Serial.print(distancia);
         Serial.println(" cm");
          // Crear un objeto JSON para enviar todas las lecturas
         DynamicJsonDocument doc(256);
-        doc["type"] = "medicion_distancia";
+        doc["type"] = "mediciones";
         doc["distancia"] = distancia;
-        doc["lm35"] = temperaturaLM35;
-        doc["sensorID"] = "ESP32-IDX332S2";
+        doc["temperatura"] = temperatura;
 
         // Serializar el JSON y enviarlo
         String jsonString;
@@ -220,12 +221,11 @@ void sendAdcReading(AsyncWebSocketClient *client) {
         // Leer el valor del ADC y convertir a voltaje
         int adcValue = analogRead(ADC_PIN);
         adcVoltage = (adcValue / 4095.0) * 3.3;  // Convertir a voltaje (0-3.3V)
-        adcVoltage = adcVoltage / 0.01;
+
         // Crear un objeto JSON para enviar todas las lecturas
         DynamicJsonDocument doc(256);
         doc["type"] = "adc_reading";
         doc["temperature"] = temperatura;
-        doc["lm35"] = adcVoltage;
         doc["humidity"] = humedad;
         doc["adc_value"] = adcVoltage;
 
@@ -326,6 +326,8 @@ void wsAdcTask(void *param) {
 void setup() {
     // Inicializa el puerto serial
     Serial.begin(115200);
+    analogReadResolution(12);        // Configura resolución de 12 bits (0-4095)
+    analogSetAttenuation(ADC_11db);  // Rango de voltaje: 0-3.3V
 
     // Conéctate a la red WiFi
     WiFi.begin(ssid, password);
@@ -363,7 +365,7 @@ void setup() {
     xTaskCreatePinnedToCore(
         wsAdcTask,       // Función de la tarea
         "WS ADC Task",   // Nombre de la tarea
-        4096,            // Tamaño de la pila
+        8192,            // Tamaño de la pila
         NULL,            // Parámetro de entrada (null en este caso)
         1,               // Prioridad
         NULL,            // Puntero a la tarea (no lo usamos)
@@ -373,7 +375,7 @@ void setup() {
     xTaskCreatePinnedToCore(
         blinkTask,       // Función de la tarea
         "Blink Task",    // Nombre de la tarea
-        2048,            // Tamaño de la pila
+        8192,            // Tamaño de la pila
         NULL,            // Parámetro de entrada (null en este caso)
         1,               // Prioridad
         NULL,            // Puntero a la tarea (no lo usamos)
