@@ -2,26 +2,52 @@
 #include <WebSocketsServer.h>   // arduinoWebSockets (Links2004)
 #include <ArduinoJson.h>        // Benoit Blanchon
 #include <ESPmDNS.h>            // mDNS / DNS-SD
+#include <Adafruit_NeoPixel.h>
+#include <DHT.h>                // Adafruit DHT
+
+#ifndef PIN_RGB
+#define PIN_RGB 48   // <- cámbialo si tu placa usa otro pin
+#endif
+
+Adafruit_NeoPixel rgb(1, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 // ====== CONFIG WiFi ======
-//const char* ssid     = "GWN571D04";
-//const char* password = "ESP32CUCEI$$s";
+ const char* ssid     = "GWN571D04";
+ const char* password = "ESP32CUCEI$$s";
 
-const char* ssid     = "Totalplay-2.4G-8200";
-const char* password = "SfyUAMkFb2L7DQDU";
+
 // ====== Servidor WebSocket (puerto 81) ======
 WebSocketsServer servidorWS(81);
+const int PIN_LED = 44;   // Pin donde está el LED
 
 // ====== Flags y temporizadores ======
 volatile bool latidoRecibido = false;
 unsigned long ultimoEnvioMs  = 0;
-unsigned long CADA_MS        = 1000;   // cadencia de telemetría en ms
+unsigned long CADA_MS        = 2000;   // cadencia de telemetría en ms (>= 2000 para DHT22)
+
+// ====== DHT22 ======
+#define PIN_DHT   6      // Tu configuración previa indicaba GPIO 6 para DHT
+#define DHTTYPE   DHT22
+DHT dht(PIN_DHT, DHTTYPE);
+
+// Control de cadencia del DHT (mínimo 2s entre lecturas)
+const unsigned long DHT_MIN_MS = 2000;
+unsigned long ultimoDhtMs = 0;
+float tempC_cache = NAN;
+float hum_cache   = NAN;
+bool  dht_ok      = false;
 
 // ====== Lectura ADC (opcional) ======
 const int PIN_ADC = 4;
 
 // ====== Variable global para el hostname ======
 String nombreHost;
+
+// ====== RGB ======
+void setColor(uint8_t r, uint8_t g, uint8_t b) {
+  rgb.setPixelColor(0, rgb.Color(r, g, b));
+  rgb.show();
+}
 
 // ====== Utilidades ======
 String macSinDosPuntos() {
@@ -52,6 +78,27 @@ void difundirJson(const JsonDocument& doc) {
   String out;
   serializeJson(doc, out);
   servidorWS.broadcastTXT(out);
+}
+
+// ---- Lectura del DHT con cache y control de tiempo ----
+void actualizarLecturaDHT(bool forzar = false) {
+  unsigned long ahora = millis();
+  if (!forzar && (ahora - ultimoDhtMs < DHT_MIN_MS)) {
+    // Aún no toca leer; mantiene cache
+    return;
+  }
+
+  float h = dht.readHumidity();
+  float t = dht.readTemperature(); // °C
+
+  if (isnan(h) || isnan(t)) {
+    dht_ok = false;  // conserva cache previo pero marca fallo
+  } else {
+    hum_cache   = h;
+    tempC_cache = t;
+    dht_ok      = true;
+    ultimoDhtMs = ahora;
+  }
 }
 
 // ---- Eventos WebSocket ----
@@ -89,6 +136,7 @@ void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t * payload, size_t long
       }
 
       const char* tipoMsg = doc["tipo"] | "";
+
       if (strcmp(tipoMsg, "latido") == 0) {
         latidoRecibido = true;
         StaticJsonDocument<160> ack;
@@ -105,6 +153,7 @@ void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t * payload, size_t long
       else if (strcmp(tipoMsg, "tasa") == 0) {
         unsigned long nueva = doc["ms"] | CADA_MS;
         if (nueva < 100)  nueva = 100;
+        if (nueva < DHT_MIN_MS) nueva = DHT_MIN_MS; // no bajar de 2s si usas DHT22
         if (nueva > 5000) nueva = 5000;
         CADA_MS = nueva;
 
@@ -112,6 +161,34 @@ void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t * payload, size_t long
         r["tipo"]  = "tasa_ok";
         r["ms"]    = (uint32_t)CADA_MS;
         enviarJsonACliente(idCliente, r);
+      }
+      else if (strcmp(tipoMsg, "led") == 0) {
+        int estado = doc["estado"] | 0; // {"tipo":"led","estado":1}
+        digitalWrite(PIN_LED, estado ? HIGH : LOW);
+        StaticJsonDocument<128> resp;
+        resp["tipo"] = "led_ack";
+        resp["estado"] = estado;
+        enviarJsonACliente(idCliente, resp);
+      }
+      else if (strcmp(tipoMsg, "rgb") == 0) {
+        uint8_t r = doc["r"] | 0;
+        uint8_t g = doc["g"] | 0;
+        uint8_t b = doc["b"] | 0;
+        setColor(r, g, b);
+        StaticJsonDocument<128> ack;
+        ack["tipo"] = "rgb_ack";
+        ack["r"] = r; ack["g"] = g; ack["b"] = b;
+        enviarJsonACliente(idCliente, ack);
+      }
+      else if (strcmp(tipoMsg, "leer_dht") == 0) {
+        // Fuerza lectura inmediata si ya pasó el mínimo (evita saturar)
+        actualizarLecturaDHT(true);
+        StaticJsonDocument<256> resp;
+        resp["tipo"]        = "dht_lectura";
+        resp["dht_ok"]      = dht_ok;
+        resp["temperatura"] = tempC_cache; // puede ser NaN si nunca hubo una válida
+        resp["humedad"]     = hum_cache;
+        enviarJsonACliente(idCliente, resp);
       }
       else {
         StaticJsonDocument<128> resp;
@@ -151,6 +228,15 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
+  pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, LOW); // LED apagado al inicio
+
+  rgb.begin();
+  rgb.clear();
+  rgb.show();   // apaga al inicio
+
+  dht.begin();  // Inicializa DHT22
+
   Serial.print("Conectando a WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(400);
@@ -176,18 +262,24 @@ void loop() {
   servidorWS.loop();
 
   const unsigned long ahora = millis();
+
+  // Actualiza lectura del DHT solo cuando toca (cacheado)
+  actualizarLecturaDHT(false);
+
   if (latidoRecibido && (ahora - ultimoEnvioMs >= CADA_MS)) {
     ultimoEnvioMs = ahora;
 
-    int lecturaADC     = analogRead(PIN_ADC);
-    float temperatura  = 25.0f + (lecturaADC % 50) * 0.02f;
-    float humedad      = 50.0f + (lecturaADC % 50) * 0.10f;
+    int lecturaADC = analogRead(PIN_ADC);
 
     StaticJsonDocument<256> msg;
     msg["tipo"]         = "telemetria";
     msg["adc"]          = lecturaADC;
-    msg["temperatura"]  = temperatura;
-    msg["humedad"]      = humedad;
+
+    // Envía últimos valores de DHT (reales o NaN si nunca fue válido)
+    msg["temperatura"]  = tempC_cache;  // °C
+    msg["humedad"]      = hum_cache;    // %
+    msg["dht_ok"]       = dht_ok;       // true si la última lectura fue válida
+
     msg["tiempo_ms"]    = (uint32_t)ahora;
 
     difundirJson(msg);
