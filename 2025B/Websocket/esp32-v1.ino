@@ -16,7 +16,7 @@ Adafruit_NeoPixel rgb(1, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 // ====== CONFIG WiFi ======
  const char* ssid     = "GWN571D04";
- const char* password = "ESP32CUCEI$$s";
+ const char* password = "ESP32CUCEI$$";
 
 // ====== Servidor WebSocket ======
 WebSocketsServer servidorWS(81);
