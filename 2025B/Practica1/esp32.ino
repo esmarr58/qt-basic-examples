@@ -26,8 +26,9 @@ void difundirJson(const JsonDocument& doc);
 Adafruit_NeoPixel rgb(1, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 // ====== CONFIG WiFi ======
-const char* ssid     = "Cambiar";
-const char* password = "Cambiar";
+ const char* ssid     = "GWN571D04";
+ const char* password = "ESP32CUCEI$$";
+
 
 // ====== Servidor WebSocket ======
 WebSocketsServer servidorWS(81);
@@ -57,102 +58,51 @@ const int PIN_ADC = 4;
 String nombreHost;
 
 // ======================================================================
-//              MAPEO DE PINES – 2 MÓDULOS L298N (ASIGNACIÓN FINAL)
+//                 MAPEO DE PINES – 1 MÓDULO L298N (11–14)
 // ======================================================================
-// Módulo 1 (Motor A completo): 4,5,6,7
-#define M1_IN1 4
-#define M1_IN2 5
-#define M1_IN3 6
-#define M1_IN4 7
-
-// Módulo 2 (Motor B completo): 11,12,13,14
-#define M2_IN1 11
-#define M2_IN2 12
-#define M2_IN3 13
-#define M2_IN4 14
-
-// Estructura para manejar pares (igual que en tu tester serial)
-struct PairPins {
-  const char* name;
-  uint8_t p1;
-  uint8_t p2;
-};
-
-// Pares: q=P0, w=P1, e=P2, r=P3 (coincide con tu diagnóstico)
-PairPins pairs[4] = {
-  {"P0 M1_IN1/M1_IN2", M1_IN1, M1_IN2}, // q
-  {"P1 M1_IN3/M1_IN4", M1_IN3, M1_IN4}, // w
-  {"P2 M2_IN1/M2_IN2", M2_IN1, M2_IN2}, // e
-  {"P3 M2_IN3/M2_IN4", M2_IN3, M2_IN4}  // r
-};
+// Un solo L298N controla 2 motores:
+//  - Motor A: IN1/IN2  -> pines 11/12
+//  - Motor B: IN3/IN4  -> pines 13/14
+#define IN1 11  // Motor A IN1
+#define IN2 12  // Motor A IN2
+#define IN3 13  // Motor B IN3
+#define IN4 14  // Motor B IN4
 
 // ======================================================================
 //                     INICIALIZACIÓN DE PINES (motores)
 // ======================================================================
 static inline void motores_init_pines() {
-  for (int i = 0; i < 4; ++i) {
-    pinMode(pairs[i].p1, OUTPUT);
-    pinMode(pairs[i].p2, OUTPUT);
-    digitalWrite(pairs[i].p1, LOW);
-    digitalWrite(pairs[i].p2, LOW);
-  }
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  // Apagados por defecto
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
 }
 
 // ======================================================================
 //                 HELPERS DE MOVIMIENTO (SIN PWM, ON/OFF)
-//  Códigos de estado por par (como en tu tester):
-//   0 -> 00 (LOW, LOW)
-//   1 -> 01 (LOW, HIGH)
-//   2 -> 10 (HIGH, LOW)
-//   3 -> 11 (HIGH, HIGH)
-// Tu diagnóstico para atajos:
-//   Avanzar:     todos = 1
-//   Retroceder:  todos = 2
-//   Derecha:     e,r = 2 ; q,w = 1
-//   Izquierda:   e,r = 1 ; q,w = 2
+//  Motor A (IN1/IN2) y Motor B (IN3/IN4)
 // ======================================================================
-static inline void setPairState(int idx, int code) {
-  if (idx < 0 || idx > 3) return;
-  uint8_t p1 = pairs[idx].p1;
-  uint8_t p2 = pairs[idx].p2;
-  switch (code) {
-    case 0: digitalWrite(p1, LOW);  digitalWrite(p2, LOW);  break;
-    case 1: digitalWrite(p1, LOW);  digitalWrite(p2, HIGH); break;
-    case 2: digitalWrite(p1, HIGH); digitalWrite(p2, LOW);  break;
-    case 3: digitalWrite(p1, HIGH); digitalWrite(p2, HIGH); break;
-    default: break;
-  }
-}
+static inline void motorA_stop()     { digitalWrite(IN1, LOW);  digitalWrite(IN2, LOW); }
+static inline void motorA_adelante() { digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW); }
+static inline void motorA_atras()    { digitalWrite(IN1, LOW);  digitalWrite(IN2, HIGH); }
 
-static inline void motores_parar_total() {
-  for (int i = 0; i < 4; ++i) setPairState(i, 0);
-}
+static inline void motorB_stop()     { digitalWrite(IN3, LOW);  digitalWrite(IN4, LOW); }
+static inline void motorB_adelante() { digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW); }
+static inline void motorB_atras()    { digitalWrite(IN3, LOW);  digitalWrite(IN4, HIGH); }
 
-// Atajos usando tu mapeo final
-static inline void mover_avanzar() {
-  setPairState(0, 1); // q
-  setPairState(1, 1); // w
-  setPairState(2, 1); // e
-  setPairState(3, 1); // r
-}
-static inline void mover_retroceder() {
-  setPairState(0, 2);
-  setPairState(1, 2);
-  setPairState(2, 2);
-  setPairState(3, 2);
-}
-static inline void mover_izquierda() {
-  setPairState(2, 1); // e
-  setPairState(3, 1); // r
-  setPairState(0, 2); // q
-  setPairState(1, 2); // w
-}
-static inline void mover_derecha() {
-  setPairState(2, 2); // e
-  setPairState(3, 2); // r
-  setPairState(0, 1); // q
-  setPairState(1, 1); // w
-}
+static inline void motores_parar_total() { motorA_stop(); motorB_stop(); }
+
+// Atajos estándar
+static inline void mover_avanzar()    { motorA_adelante(); motorB_adelante(); }
+static inline void mover_retroceder() { motorA_atras();    motorB_atras();    }
+static inline void mover_izquierda()  { motorA_atras();    motorB_adelante(); } // giro en sitio
+static inline void mover_derecha()    { motorA_adelante(); motorB_atras();    } // giro en sitio
 
 // ======================================================================
 //        COLA / TASK DE MOTORES (CORE 1) - CONTROL POR millis()
@@ -186,7 +136,7 @@ void MotorTask(void* arg) {
       if (nuevo.accion == DirMov::Parar || nuevo.accion == DirMov::Parado || nuevo.dur_ms == 0) {
         enMovimiento = false;
       } else {
-        // Aplicar movimiento según tu mapeo final (pares q,w,e,r)
+        // Aplicar movimiento
         switch (nuevo.accion) {
           case DirMov::Avanzar:     mover_avanzar();    break;
           case DirMov::Retroceder:  mover_retroceder(); break;
