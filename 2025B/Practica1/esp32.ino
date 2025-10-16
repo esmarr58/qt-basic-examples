@@ -26,8 +26,8 @@ void difundirJson(const JsonDocument& doc);
 Adafruit_NeoPixel rgb(1, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 // ====== CONFIG WiFi ======
-const char* ssid     = "Totalplay-2.4G-8200";
-const char* password = "SfyUAMkFb2L7DQDU";
+const char* ssid     = "Cambiar";
+const char* password = "Cambiar";
 
 // ====== Servidor WebSocket ======
 WebSocketsServer servidorWS(81);
