@@ -44,7 +44,8 @@ apt-get install -y \
   libxcb-xinerama0 \
   libxcb-cursor0 libxcb-cursor-dev \
   libmysqlclient-dev \
-  openssl
+  openssl \
+  libfuse2
 
 echo "==> Paquetes base OK."
 
