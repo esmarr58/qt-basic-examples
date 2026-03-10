@@ -11,7 +11,7 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) { /* en UNO no es necesario, pero no estorba */ }
 
   Serial.println(F("Listo. Envia JSON y presiona Enter (ej: {\"pin\":13,\"estado\":1})"));
