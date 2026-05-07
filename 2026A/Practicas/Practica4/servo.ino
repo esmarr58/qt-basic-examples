@@ -1,4 +1,4 @@
-#include <ESP32Servo.h>
+#include <ESP32Servo.h> //version 3.0.9
 
 Servo miServo;        // Crear objeto tipo Servo
 const int pinServo = 35;  // Pin donde está conectado el servo
