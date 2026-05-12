@@ -405,7 +405,7 @@ void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t * payload, size_t long
 
        
   
-        resp["tipo"]        = "distancia_lectura";
+        resp["tipo"]        = "scan";
         resp["d"]      = distancia;
         resp["angulo"]      = angulo;
       
