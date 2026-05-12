@@ -380,6 +380,38 @@ void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t * payload, size_t long
         enviarJsonACliente(idCliente, resp);
         
       }
+       else if (strcmp(tipoMsg, "scan") == 0) {
+
+        uint8_t angulo = doc["angulo"] | 0;
+        miServo.write(angulo);
+        delay(500);
+        
+        StaticJsonDocument<256> resp;
+        
+        // Asegurar trigger en LOW
+        digitalWrite(TRIG_PIN, LOW);
+        delayMicroseconds(2);
+      
+        // Pulso de 10 us al trigger
+        digitalWrite(TRIG_PIN, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(TRIG_PIN, LOW);
+      
+        // Leer duración del eco
+        long duracion = pulseIn(ECHO_PIN, HIGH);
+      
+        // Calcular distancia en cm
+        float distancia = duracion * 0.0343 / 2;
+
+       
+  
+        resp["tipo"]        = "distancia_lectura";
+        resp["d"]      = distancia;
+        resp["angulo"]      = angulo;
+      
+        enviarJsonACliente(idCliente, resp);
+        
+      }
 
 
     } break;
