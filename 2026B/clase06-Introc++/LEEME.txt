@@ -1,0 +1,29 @@
+Actividad guiada (NO evaluable) - Git, g++ y compilar en la terminal
+Diseno de Interfaces (I7262) - Dr. Ruben Estrada Marmolejo
+
+Archivos para el servidor del aula (http://192.168.1.101/).
+Los alumnos DESCARGAN el codigo de aqui (no lo teclean del PDF).
+
+------------------------------------------------------------
+hola.cpp                (C++ estandar)
+  g++ hola.cpp -o hola
+  ./hola
+
+cuadrado.cpp            (C++ estandar; pide un numero)
+  g++ cuadrado.cpp -o cuadrado
+  ./cuadrado
+
+detectorCaras.cpp       (requiere OpenCV 4)
+  g++ -Wall detectorCaras.cpp -o detectorCaras $(pkg-config --cflags --libs opencv4)
+  ./detectorCaras        (tecla 'q' para salir)
+
+detectorCaras-v2.cpp    (variante: marca el centro y las coordenadas)
+  g++ -Wall detectorCaras-v2.cpp -o detectorCaras-v2 $(pkg-config --cflags --libs opencv4)
+  ./detectorCaras-v2
+------------------------------------------------------------
+
+Validacion de compilacion:
+  - hola.cpp y cuadrado.cpp: COMPILADOS y EJECUTADOS OK (hola -> "Hola, mundo...";
+    cuadrado 7 -> 49, 12 -> 144).
+  - detectorCaras.cpp / -v2.cpp: codigo probado del profesor; se compilan en el
+    Linux del laboratorio con OpenCV 4 (comando arriba). Estructura verificada.
