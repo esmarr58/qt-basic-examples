@@ -20,6 +20,7 @@ int main() {
     }
 
     Mat frame;
+    namedWindow("Detección de Caras", WINDOW_AUTOSIZE);
     while (true) {
         // Capturar frame por frame
         cap >> frame;
