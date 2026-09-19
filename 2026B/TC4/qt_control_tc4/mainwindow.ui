@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>720</width>
+    <height>560</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TC4 - Control de ESP32-S3 por WebSockets (JSON)</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="layoutPrincipal">
+    <item>
+     <widget class="QGroupBox" name="grupoConexion">
+      <property name="title">
+       <string>Conexión con la ESP32</string>
+      </property>
+      <layout class="QHBoxLayout" name="layoutConexion">
+       <item>
+        <widget class="QLabel" name="etiquetaIp">
+         <property name="text">
+          <string>IP de la ESP32:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEditIp">
+         <property name="placeholderText">
+          <string>192.168.x.x</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="etiquetaPuerto">
+         <property name="text">
+          <string>Puerto:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEditPuerto">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>81</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="botonConectar">
+         <property name="text">
+          <string>Conectar</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="etiquetaEstado">
+         <property name="text">
+          <string>Desconectado</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="grupoSalidas">
+      <property name="title">
+       <string>Salidas digitales remotas (JSON por WebSocket)</string>
+      </property>
+      <layout class="QGridLayout" name="layoutSalidas">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="casillaSalida1">
+         <property name="text">
+          <string>Salida 1 (IN1)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="casillaSalida2">
+         <property name="text">
+          <string>Salida 2 (IN2)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QCheckBox" name="casillaSalida3">
+         <property name="text">
+          <string>Salida 3 (IN3)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QCheckBox" name="casillaSalida4">
+         <property name="text">
+          <string>Salida 4 (IN4)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="casillaRgb">
+         <property name="text">
+          <string>LED RGB de la placa</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="grupoSonido">
+      <property name="title">
+       <string>Sonido (los botones de la ESP32 lo controlan)</string>
+      </property>
+      <layout class="QHBoxLayout" name="layoutSonido">
+       <item>
+        <widget class="QLabel" name="etiquetaBoton">
+         <property name="text">
+          <string>Último botón: —</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="espaciadorSonido">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="botonCargarSonido">
+         <property name="text">
+          <string>Cargar sonido…</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="botonReproducir">
+         <property name="text">
+          <string>Reproducir</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="botonPausar">
+         <property name="text">
+          <string>Pausar</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="grupoRegistro">
+      <property name="title">
+       <string>Mensajes JSON</string>
+      </property>
+      <layout class="QVBoxLayout" name="layoutRegistro">
+       <item>
+        <widget class="QTextEdit" name="registro">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>720</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
