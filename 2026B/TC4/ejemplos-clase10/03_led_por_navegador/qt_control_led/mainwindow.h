@@ -10,10 +10,10 @@ class QLabel;
 
 // Ventana que "empareja" con el sketch 03_led_por_navegador:
 // envia GET /encender o /apagar para controlar el LED de la ESP32.
-class VentanaPrincipal : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    explicit VentanaPrincipal(QWidget *padre = nullptr);
+    explicit MainWindow(QWidget *padre = nullptr);
 
 private slots:
     void encender();

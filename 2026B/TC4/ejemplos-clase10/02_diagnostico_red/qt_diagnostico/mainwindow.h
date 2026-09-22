@@ -10,10 +10,10 @@ class QTextEdit;
 
 // Ventana que "empareja" con el sketch 02_diagnostico_red:
 // consulta GET /info y muestra los datos de red de la ESP32.
-class VentanaPrincipal : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    explicit VentanaPrincipal(QWidget *padre = nullptr);
+    explicit MainWindow(QWidget *padre = nullptr);
 
 private slots:
     void alConsultar();

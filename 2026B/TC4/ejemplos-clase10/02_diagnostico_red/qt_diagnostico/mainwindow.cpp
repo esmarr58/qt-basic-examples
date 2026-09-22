@@ -11,7 +11,7 @@
 #include <QNetworkReply>
 #include <QUrl>
 
-VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
+MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     setWindowTitle("Ejemplo 2 - Diagnostico de red (Clase 10)");
     gestorRed = new QNetworkAccessManager(this);
 
@@ -35,10 +35,10 @@ VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
     setCentralWidget(central);
     resize(460, 320);
 
-    connect(botonConsultar, &QPushButton::clicked, this, &VentanaPrincipal::alConsultar);
+    connect(botonConsultar, &QPushButton::clicked, this, &MainWindow::alConsultar);
 }
 
-void VentanaPrincipal::alConsultar() {
+void MainWindow::alConsultar() {
     const QString ip = campoIp->text().trimmed();
     if (ip.isEmpty())
         return;

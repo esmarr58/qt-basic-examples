@@ -11,7 +11,7 @@
 #include <QNetworkReply>
 #include <QUrl>
 
-VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
+MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     setWindowTitle("Ejemplo 1 - Espejo del boton (Clase 10)");
     gestorRed = new QNetworkAccessManager(this);
     temporizador = new QTimer(this);
@@ -42,16 +42,16 @@ VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
     setCentralWidget(central);
     resize(440, 280);
 
-    connect(botonConectar, &QPushButton::clicked, this, &VentanaPrincipal::alConectar);
-    connect(temporizador, &QTimer::timeout, this, &VentanaPrincipal::consultarEstado);
+    connect(botonConectar, &QPushButton::clicked, this, &MainWindow::alConectar);
+    connect(temporizador, &QTimer::timeout, this, &MainWindow::consultarEstado);
 }
 
-void VentanaPrincipal::alConectar() {
+void MainWindow::alConectar() {
     temporizador->start();
     consultarEstado();
 }
 
-void VentanaPrincipal::consultarEstado() {
+void MainWindow::consultarEstado() {
     const QString ip = campoIp->text().trimmed();
     if (ip.isEmpty())
         return;
@@ -70,7 +70,7 @@ void VentanaPrincipal::consultarEstado() {
     });
 }
 
-void VentanaPrincipal::mostrarEstado(bool encendido) {
+void MainWindow::mostrarEstado(bool encendido) {
     indicador->setText(encendido ? "ENCENDIDO" : "APAGADO");
     indicador->setStyleSheet(
         QString("font-size:36px; font-weight:bold; padding:40px; border-radius:12px;"

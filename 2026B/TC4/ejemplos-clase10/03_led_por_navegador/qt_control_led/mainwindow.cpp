@@ -10,7 +10,7 @@
 #include <QNetworkReply>
 #include <QUrl>
 
-VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
+MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     setWindowTitle("Ejemplo 3 - Control del LED (Clase 10)");
     gestorRed = new QNetworkAccessManager(this);
 
@@ -40,19 +40,19 @@ VentanaPrincipal::VentanaPrincipal(QWidget *padre) : QMainWindow(padre) {
     setCentralWidget(central);
     resize(440, 220);
 
-    connect(botonEncender, &QPushButton::clicked, this, &VentanaPrincipal::encender);
-    connect(botonApagar,   &QPushButton::clicked, this, &VentanaPrincipal::apagar);
+    connect(botonEncender, &QPushButton::clicked, this, &MainWindow::encender);
+    connect(botonApagar,   &QPushButton::clicked, this, &MainWindow::apagar);
 }
 
-void VentanaPrincipal::encender() {
+void MainWindow::encender() {
     enviarComando("/encender", "LED ENCENDIDO");
 }
 
-void VentanaPrincipal::apagar() {
+void MainWindow::apagar() {
     enviarComando("/apagar", "LED APAGADO");
 }
 
-void VentanaPrincipal::enviarComando(const QString &ruta, const QString &mensajeOk) {
+void MainWindow::enviarComando(const QString &ruta, const QString &mensajeOk) {
     const QString ip = campoIp->text().trimmed();
     if (ip.isEmpty())
         return;

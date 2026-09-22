@@ -11,10 +11,10 @@ class QTimer;
 
 // Ventana que "empareja" con el sketch 01_boton_retencion_led:
 // consulta GET /estado por la red y refleja el LED de la ESP32.
-class VentanaPrincipal : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    explicit VentanaPrincipal(QWidget *padre = nullptr);
+    explicit MainWindow(QWidget *padre = nullptr);
 
 private slots:
     void alConectar();
