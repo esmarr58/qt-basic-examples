@@ -2,15 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkAccessManager>
+#include <QWebSocket>
 
 class QLineEdit;
 class QPushButton;
 class QLabel;
-class QTimer;
 
-// Ventana que "empareja" con el sketch 01_boton_retencion_led:
-// consulta GET /estado por la red y refleja el LED de la ESP32.
+// Empareja con el sketch 01_boton_retencion_led por WebSocket (ws://<IP>:81):
+// recibe "LED:ON"/"LED:OFF" y refleja el LED de la ESP32 en tiempo real.
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -18,7 +17,9 @@ public:
 
 private slots:
     void alConectar();
-    void consultarEstado();
+    void alConectarSocket();
+    void alDesconectarSocket();
+    void alRecibirMensaje(const QString &mensaje);
 
 private:
     void mostrarEstado(bool encendido);
@@ -27,8 +28,7 @@ private:
     QPushButton *botonConectar;
     QLabel     *indicador;
     QLabel     *etiquetaAyuda;
-    QTimer     *temporizador;
-    QNetworkAccessManager *gestorRed;
+    QWebSocket  socket;
 };
 
 #endif // MAINWINDOW_H

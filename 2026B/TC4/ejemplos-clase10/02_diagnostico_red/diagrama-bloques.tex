@@ -39,10 +39,10 @@
   {\titulo\textcolor{colPC}{PC — App Qt}}\\[1pt]
   {\bfseries(Diagnóstico)}\\[4pt]
   \footnotesize Al presionar \textbf{«Consultar»}\\
-  \footnotesize hace \textbf{HTTP GET} a\\
-  \footnotesize \texttt{http://<IP>/info}\\
-  \footnotesize y muestra el texto\\
-  \footnotesize en un cuadro.
+  \footnotesize envía por \textbf{WebSocket}\\
+  \footnotesize \texttt{\{"tipo":"leer\_red"\}}\\
+  \footnotesize y muestra la respuesta\\
+  \footnotesize JSON en un cuadro.
 };
 
 % --- Red WiFi (centro) : nube ---
@@ -58,26 +58,30 @@
 \node[bloque, draw=colESP, fill=colESPfill, right=of red] (esp) {
   {\titulo\textcolor{colESP}{ESP32-S3}}\\[1pt]
   {\bfseries(Arduino)}\\[4pt]
-  \footnotesize Servidor web\\
-  \footnotesize ruta \texttt{/info}\\[3pt]
-  \footnotesize Responde datos\\
-  \footnotesize de la conexión.
+  \footnotesize Servidor \textbf{WebSocket}\\
+  \footnotesize \texttt{ws://<IP>:81}\\[3pt]
+  \footnotesize Responde datos de\\
+  \footnotesize red en \textbf{JSON}.
 };
 
 % ===================== Flechas PC <-> Red =====================
 \draw[flecha, ->, colPC]
-  ([yshift=6mm]pc.east) -- node[etiqueta, above, pos=0.5]{GET \texttt{/info}}
+  ([yshift=6mm]pc.east) --
+  node[etiqueta, above, pos=0.5]{\textbf{WebSocket}\\ \texttt{ws://<IP>:81}\\ (mensajes JSON)}
   ([yshift=6mm]red.west);
 \draw[flecha, ->, colRed]
-  ([yshift=-6mm]red.west) -- ([yshift=-6mm]pc.east);
+  ([yshift=-6mm]red.west) --
+  node[etiqueta, below, pos=0.5]{\texttt{\{"tipo":"saludo"\}}\\ al conectar}
+  ([yshift=-6mm]pc.east);
 
 % ===================== Flechas Red <-> ESP32 =====================
 \draw[flecha, ->, colPC]
-  ([yshift=6mm]red.east) -- node[etiqueta, above, pos=0.5]{GET \texttt{/info}}
+  ([yshift=6mm]red.east) --
+  node[etiqueta, above, pos=0.5]{JSON\\ \texttt{\{"tipo":"leer\_red"\}}}
   ([yshift=6mm]esp.west);
 \draw[flecha, ->, colRed]
   ([yshift=-6mm]esp.west) --
-  node[etiqueta, below, pos=0.5]{IP, máscara, gateway,\\ DNS, MAC, RSSI}
+  node[etiqueta, below, pos=0.5, text width=44mm]{\texttt{\{"tipo":"datos\_red",}\\ \texttt{"ssid":..,"ip":..,"mascara":..,}\\ \texttt{"gateway":..,"dns":..,}\\ \texttt{"mac":..,"rssi":..\}}}
   ([yshift=-6mm]red.east);
 
 % ===================== Hardware colgando del ESP32 =====================
@@ -93,8 +97,8 @@
 % ===================== Nota al pie =====================
 \node[etiqueta, font=\sffamily\small, text width=150mm,
       below=10mm of hw.south, anchor=north] (nota) {
-  \textbf{Nota:} Confirma que la PC y la ESP32 quedan en la \textbf{MISMA red}
-  (misma subred/gateway) antes del \textbf{TC4}.
+  \textbf{Nota:} Mismo protocolo que la \textbf{Práctica 4} y el \textbf{TC4}
+  (WebSocket + JSON con campo \texttt{tipo}).
 };
 
 % ===================== Marco de fondo =====================

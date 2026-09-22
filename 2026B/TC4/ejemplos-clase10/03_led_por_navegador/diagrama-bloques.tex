@@ -44,32 +44,32 @@
 % ================= BLOQUES PRINCIPALES (fila horizontal) =================
 \node[pc]  (pc)  {\textbf{PC — App Qt}\\\textbf{(Control del LED)}\\[2pt]
   \footnotesize Botones \textbf{ENCENDER} / \textbf{APAGAR}\\
-  \footnotesize$\rightarrow$ HTTP GET a\\
-  \footnotesize\texttt{/encender} · \texttt{/apagar}\\[2pt]
+  \footnotesize$\rightarrow$ envían mensaje\\
+  \footnotesize WebSocket (JSON)\\[2pt]
   \scriptsize(también sirve un navegador)};
 
 \node[nube] (red) [right=34mm of pc] {\textbf{Red WiFi}\\\textbf{SSID GWN571D04}};
 
-\node[esp]  (esp) [right=34mm of red] {\textbf{ESP32-S3 (Arduino)}\\\textbf{Servidor web}\\[2pt]
-  \footnotesize Rutas:\\
-  \footnotesize\texttt{/}~·~\texttt{/encender}~·~\texttt{/apagar}};
+\node[esp]  (esp) [right=34mm of red] {\textbf{ESP32-S3 (Arduino)}\\\textbf{Servidor WebSocket}\\[2pt]
+  \footnotesize Escucha en\\
+  \footnotesize\texttt{ws://<IP>:81}};
 
 % ================= FLECHAS PC <-> RED <-> ESP32 =================
 % Ida: PC -> Red
-\draw[->, line width=1.1pt, azulPC] (pc.east) -- node[etiq, above, yshift=1pt]{GET \texttt{/encender}}
-      node[etiq, below, yshift=-1pt]{GET \texttt{/apagar}} (red.west);
+\draw[->, line width=1.1pt, azulPC] (pc.east) -- node[etiq, above, yshift=1pt]{WebSocket \texttt{ws://<IP>:81}}
+      node[etiq, below, yshift=-1pt]{\scriptsize\texttt{\{"tipo":"led","encendido":true|false\}}} (red.west);
 % Ida: Red -> ESP32
-\draw[->, line width=1.1pt, verdeESP] (red.east) -- node[etiq, above, yshift=1pt]{GET \texttt{/encender}}
-      node[etiq, below, yshift=-1pt]{GET \texttt{/apagar}} (esp.west);
+\draw[->, line width=1.1pt, verdeESP] (red.east) -- node[etiq, above, yshift=1pt]{mensajes JSON}
+      node[etiq, below, yshift=-1pt]{\scriptsize\texttt{\{"tipo":"led", ...\}}} (esp.west);
 
 % Retorno: ESP32 -> Red -> PC (arco inferior)
 \draw[->, line width=1.0pt, grisRed]
    (esp.south west) ++(0,-2mm)
-   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{página HTML / estado}
+   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{\scriptsize\texttt{\{"tipo":"estado\_led","encendido":..\}}}
    ($(red.south east)+(0,-2mm)$);
 \draw[->, line width=1.0pt, grisRed]
    ($(red.south west)+(0,-2mm)$)
-   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{página HTML / estado}
+   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{\scriptsize\texttt{\{"tipo":"saludo"\}} al conectar}
    ($(pc.south east)+(0,-2mm)$);
 
 % ================= BLOQUE HARDWARE (colgando del ESP32) =================
@@ -82,8 +82,8 @@
 \draw[->, line width=1.1pt, naranjaHW] (esp.south) -- node[etiq, right, xshift=1pt, text=naranjaHW]{control / lectura} (hw.north);
 
 % ================= NOTA AL PIE =================
-\node[etiq, below=8mm of hw, text width=150mm] (nota) {%
-  \itshape Mismo ida y vuelta PC$\leftrightarrow$ESP32 que el TC4, pero con HTTP en vez de WebSockets+JSON.};
+\node[etiq, below=8mm of hw, text width=175mm] (nota) {%
+  \itshape Mismo ida y vuelta que el TC4 (WebSocket + JSON con campo \texttt{tipo}); en el TC4 se agregan más comandos.};
 
 \end{tikzpicture}
 \end{document}

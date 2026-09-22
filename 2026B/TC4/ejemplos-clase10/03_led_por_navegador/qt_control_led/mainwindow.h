@@ -2,31 +2,35 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkAccessManager>
+#include <QWebSocket>
 
 class QLineEdit;
 class QPushButton;
 class QLabel;
 
-// Ventana que "empareja" con el sketch 03_led_por_navegador:
-// envia GET /encender o /apagar para controlar el LED de la ESP32.
+// Empareja con el sketch 03_led_por_navegador por WebSocket (ws://<IP>:81):
+// envia "ENCENDER"/"APAGAR" y refleja el estado del LED.
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *padre = nullptr);
 
 private slots:
+    void alConectar();
+    void alConectarSocket();
     void encender();
     void apagar();
+    void alRecibirMensaje(const QString &mensaje);
 
 private:
-    void enviarComando(const QString &ruta, const QString &mensajeOk);
+    void enviarLed(bool encendido);
 
     QLineEdit  *campoIp;
+    QPushButton *botonConectar;
     QPushButton *botonEncender;
     QPushButton *botonApagar;
     QLabel     *etiquetaEstado;
-    QNetworkAccessManager *gestorRed;
+    QWebSocket  socket;
 };
 
 #endif // MAINWINDOW_H

@@ -1,9 +1,9 @@
 # ============================================================================
-#  Ejemplo 1 (Clase 10) - "Espejo del boton" - Diseno de Interfaces (I7262)
-#  App de Qt que empareja con el sketch 01_boton_retencion_led:
-#  cada 500 ms hace HTTP GET /estado y refleja el LED de la ESP32.
+#  Ejemplo 1 (Clase 10) - "Espejo del boton" (WebSocket) - Interfaces (I7262)
+#  App de Qt que empareja con 01_boton_retencion_led por WebSocket:
+#  se conecta a ws://<IP>:81 y refleja el LED en tiempo real ("LED:ON"/"LED:OFF").
 # ============================================================================
-QT += core gui widgets network
+QT += core gui widgets websockets
 CONFIG += c++17
 
 SOURCES += main.cpp mainwindow.cpp

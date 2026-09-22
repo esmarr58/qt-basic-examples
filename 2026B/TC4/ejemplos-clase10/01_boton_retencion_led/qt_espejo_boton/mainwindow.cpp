@@ -6,16 +6,12 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QLabel>
-#include <QTimer>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
-    setWindowTitle("Ejemplo 1 - Espejo del boton (Clase 10)");
-    gestorRed = new QNetworkAccessManager(this);
-    temporizador = new QTimer(this);
-    temporizador->setInterval(500);
+    setWindowTitle("Ejemplo 1 - Espejo del boton (WebSocket + JSON)");
 
     QWidget *central = new QWidget(this);
     QVBoxLayout *raiz = new QVBoxLayout(central);
@@ -34,40 +30,40 @@ MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
                              "background:#dddddd; border-radius:12px;");
     raiz->addWidget(indicador);
 
-    etiquetaAyuda = new QLabel("Conecta y presiona el boton fisico de la ESP32: "
-                               "la ventana reflejara el estado del LED por la red.", central);
+    etiquetaAyuda = new QLabel("Escribe la IP y conecta. Luego presiona el boton fisico "
+                               "de la ESP32: la ventana reflejara el LED (JSON por WebSocket).", central);
     etiquetaAyuda->setWordWrap(true);
     raiz->addWidget(etiquetaAyuda);
 
     setCentralWidget(central);
-    resize(440, 280);
+    resize(470, 300);
 
     connect(botonConectar, &QPushButton::clicked, this, &MainWindow::alConectar);
-    connect(temporizador, &QTimer::timeout, this, &MainWindow::consultarEstado);
+    connect(&socket, &QWebSocket::connected, this, &MainWindow::alConectarSocket);
+    connect(&socket, &QWebSocket::disconnected, this, &MainWindow::alDesconectarSocket);
+    connect(&socket, &QWebSocket::textMessageReceived, this, &MainWindow::alRecibirMensaje);
 }
 
 void MainWindow::alConectar() {
-    temporizador->start();
-    consultarEstado();
-}
-
-void MainWindow::consultarEstado() {
     const QString ip = campoIp->text().trimmed();
     if (ip.isEmpty())
         return;
-    QNetworkRequest peticion(QUrl("http://" + ip + "/estado"));
-    QNetworkReply *respuesta = gestorRed->get(peticion);
-    connect(respuesta, &QNetworkReply::finished, this, [this, respuesta]() {
-        if (respuesta->error() == QNetworkReply::NoError) {
-            const QString texto = QString::fromUtf8(respuesta->readAll()).trimmed();
-            mostrarEstado(texto == "ON");
-        } else {
-            indicador->setText("sin conexion");
-            indicador->setStyleSheet("font-size:24px; padding:40px;"
-                                     "background:#f8d7da; border-radius:12px;");
-        }
-        respuesta->deleteLater();
-    });
+    socket.open(QUrl("ws://" + ip + ":81"));
+    etiquetaAyuda->setText("Conectando a ws://" + ip + ":81 ...");
+}
+
+void MainWindow::alConectarSocket() {
+    etiquetaAyuda->setText("Conectado. Presiona el boton fisico de la ESP32.");
+}
+
+void MainWindow::alDesconectarSocket() {
+    etiquetaAyuda->setText("Desconectado. Verifica la IP y la red GWN571D04.");
+}
+
+void MainWindow::alRecibirMensaje(const QString &mensaje) {
+    const QJsonObject obj = QJsonDocument::fromJson(mensaje.toUtf8()).object();
+    if (obj.value("tipo").toString() == "estado_led")
+        mostrarEstado(obj.value("encendido").toBool());
 }
 
 void MainWindow::mostrarEstado(bool encendido) {

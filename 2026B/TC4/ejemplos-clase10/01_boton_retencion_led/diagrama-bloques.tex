@@ -39,7 +39,7 @@
 \node[bloque, draw=colPC, fill=colPCfill] (pc) {
   {\titulo PC — App Qt}\\[2pt]
   {\bfseries Espejo del botón}\\[4pt]
-  {\small Cada 500 ms:\\ HTTP GET a\\ \texttt{http://<IP>/estado}\\ Muestra ENCENDIDO / APAGADO\\ reflejando el LED}
+  {\small Sólo ESCUCHA\\ el WebSocket\\ (sin polling)\\ Muestra ENCENDIDO / APAGADO\\ reflejando el LED en tiempo real}
 };
 
 \node[rectangle, rounded corners=10pt, draw=colNet, fill=colNetfill,
@@ -58,18 +58,21 @@
 
 \node[bloque, draw=colESP, fill=colESPfill, right=34mm of red, minimum height=30mm] (esp) {
   {\titulo ESP32-S3 (Arduino)}\\[4pt]
-  {\small Servidor web\\ + botón con retención\\ (antirrebote)}
+  {\small Servidor WebSocket\\ + botón con retención\\ (antirrebote)}
 };
 
-% ===== Flechas PC <-> Red <-> ESP32 (bidireccional, rotuladas) =====
-% Ida: GET /estado  (PC -> Red -> ESP32)
+% ===== Enlace PC <-> Red <-> ESP32 (WebSocket bidireccional, rotulado) =====
+% Canal WebSocket (PC <-> ESP32): mismo enlace en ambos sentidos
 \draw[flecha, colPC] ([yshift=6mm]pc.east) -- ([yshift=6mm]red.west)
-   node[etiqueta, midway, above] {\texttt{GET /estado}};
+   node[etiqueta, midway, above, align=center]
+     {WebSocket\\ \texttt{ws://<IP>:81}\\ (mensajes JSON)};
 \draw[flecha, colPC] ([yshift=6mm]red.east) -- ([yshift=6mm]esp.west);
 
-% Regreso: ON / OFF  (ESP32 -> Red -> PC)
+% Mensajes JSON del ESP32 hacia la App Qt (ESP32 -> Red -> PC)
 \draw[flecha, colESP] ([yshift=-6mm]esp.west) -- ([yshift=-6mm]red.east)
-   node[etiqueta, midway, below] {\texttt{ON / OFF}};
+   node[etiqueta, midway, below, align=center]
+     {JSON al pulsar:\\ \texttt{\{"tipo":"estado\_led",}\\ \texttt{"encendido":true|false\}}\\
+      al conectar: \texttt{\{"tipo":"saludo"\}}};
 \draw[flecha, colESP] ([yshift=-6mm]red.west) -- ([yshift=-6mm]pc.east);
 
 % ===== Hardware colgando del ESP32 =====
@@ -91,8 +94,7 @@
 % ===== Nota al pie =====
 \node[align=left, font=\sffamily\small\itshape, text width=150mm,
       below=6mm of rgb, anchor=north] (nota)
-  {Nota: el botón físico alterna el LED (retención con antirrebote);\\
-   Qt sólo refleja el estado por la red.};
+  {Nota: mismo protocolo que la Práctica 4 y el TC4 (WebSocket + JSON con campo \texttt{tipo}).};
 
 % ===== Recuadro de agrupación del hardware =====
 \begin{scope}[on background layer]

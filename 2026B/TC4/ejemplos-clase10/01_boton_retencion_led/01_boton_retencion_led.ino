@@ -1,125 +1,121 @@
 /*
- * Ejemplo 1 (Clase 10) - Boton con RETENCION que enciende un LED de la ESP32-S3,
- *                         conexion a la red y ESPEJO por la red (para la app Qt).
+ * Ejemplo 1 (Clase 10) - Boton con RETENCION -> LED, ESPEJO por WebSocket + JSON.
  * Diseno de Interfaces (I7262) - Dr. Ruben Estrada Marmolejo, CUCEI-UDG.
  *
- * Prueba TRES cosas antes del TC4:
- *   (1) HARDWARE: un pulsador con "retencion" -> cada pulsacion ENCIENDE o APAGA
- *       el LED (igual que en la Practica 1), con antirrebote.
- *   (2) RED: la placa se conecta al Access Point del salon e imprime su IP.
- *   (3) EMPAREJAMIENTO: levanta un pequeno servidor web para que la app de Qt
- *       (o un navegador) LEA el estado del LED por la red:
- *          GET /estado  -> responde "ON" o "OFF"
- *          GET /        -> pagina HTML que se auto-actualiza
- *       Asi la ventana de Qt refleja lo que hace el boton fisico.
+ * MISMO protocolo que la Practica 4 y el TC4: servidor WebSocket (puerto 81) con
+ * mensajes JSON que llevan un campo "tipo". Helpers: onEventoWS, enviarJsonACliente,
+ * difundirJson. Al conectarse un cliente se le manda un {"tipo":"saludo"} y el estado.
  *
- * Cableado (el mismo del TC4):
- *   - Pulsador externo entre GPIO15 y GND  (INPUT_PULLUP: reposo=HIGH, presionado=LOW)
- *   - LED externo + R 330 ohm en GPIO4
- *   - LED RGB de la placa (WS2812) en GPIO48: verde=encendido, negro=apagado
+ *   ESP32 -> PC (JSON):
+ *     {"tipo":"saludo","mensaje":"...","puerto":81}
+ *     {"tipo":"estado_led","encendido":true|false}   // al cambiar el boton
  *
- * Librerias: WiFi + WebServer (core ESP32) + Adafruit NeoPixel.
- * Placa (Arduino IDE): "ESP32S3 Dev Module".
+ * (1) Hardware: pulsador con retencion -> LED (como Practica 1), con antirrebote.
+ * (2) Red: se conecta al Access Point del salon e imprime su IP.
+ * (3) Empareja con la app de Qt por ws://<IP>:81 (la ventana refleja el LED).
+ *
+ * Cableado: pulsador GPIO15->GND (INPUT_PULLUP), LED GPIO4 + R 330, LED RGB GPIO48.
+ * Librerias: WiFi (core) + WebSockets (Links2004) + ArduinoJson + Adafruit NeoPixel.
+ * Placa: "ESP32S3 Dev Module".
  */
 #include <WiFi.h>
-#include <WebServer.h>
+#include <WebSocketsServer.h>
+#include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
 
-// ----- Red del salon (misma del TC4) -----
 const char* nombreRed = "GWN571D04";
 const char* claveRed  = "ESP32CUCEI$$";
 
-// ----- Pines -----
-const int pinBoton  = 15;   // pulsador -> GND (INPUT_PULLUP)
-const int pinLed    = 4;    // LED externo + R 330 ohm
-const int pinLedRgb = 48;   // LED RGB integrado en la placa
+const int pinBoton  = 15;
+const int pinLed    = 4;
+const int pinLedRgb = 48;
 
-WebServer servidor(80);
+WebSocketsServer socketServidor(81);
 Adafruit_NeoPixel ledPlaca(1, pinLedRgb, NEO_GRB + NEO_KHZ800);
 
-// ----- Estado de la retencion (memoria del LED) -----
 bool ledEncendido = false;
 
-// ----- Variables del antirrebote -----
-int  ultimaLectura   = HIGH;
-int  estadoEstable   = HIGH;
+int  ultimaLectura = HIGH, estadoEstable = HIGH;
 unsigned long tiempoCambio = 0;
 const unsigned long msAntirrebote = 30;
 
+// ---- Helpers JSON (igual que la Practica 4) ----
+void enviarJsonACliente(uint8_t idCliente, const JsonDocument& doc) {
+  String salida; serializeJson(doc, salida);
+  socketServidor.sendTXT(idCliente, salida);
+}
+void difundirJson(const JsonDocument& doc) {
+  String salida; serializeJson(doc, salida);
+  socketServidor.broadcastTXT(salida);
+}
+
 void aplicarLed() {
   digitalWrite(pinLed, ledEncendido ? HIGH : LOW);
-  if (ledEncendido) ledPlaca.setPixelColor(0, ledPlaca.Color(0, 80, 0)); // verde
-  else              ledPlaca.setPixelColor(0, 0);                        // apagado
+  ledPlaca.setPixelColor(0, ledEncendido ? ledPlaca.Color(0, 80, 0) : 0);
   ledPlaca.show();
 }
 
-// ----- Servidor web: la app de Qt lee el estado por aqui -----
-void manejarEstado() {
-  servidor.send(200, "text/plain", ledEncendido ? "ON" : "OFF");
+void difundirEstado() {
+  JsonDocument doc;
+  doc["tipo"]      = "estado_led";
+  doc["encendido"] = ledEncendido;
+  difundirJson(doc);
 }
-void manejarRaiz() {
-  String estado = ledEncendido ? "ENCENDIDO" : "APAGADO";
-  String html = "<!doctype html><html lang='es'><head><meta charset='utf-8'>";
-  html += "<meta http-equiv='refresh' content='1'>";   // se auto-actualiza cada 1 s
-  html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
-  html += "<title>Ejemplo 1 - boton con retencion</title></head>";
-  html += "<body style='font-family:sans-serif;text-align:center;margin-top:40px'>";
-  html += "<h2>LED de la ESP32</h2><p>Estado: <b>" + estado + "</b></p>";
-  html += "<p style='color:#888'>Presiona el boton fisico para alternar.</p></body></html>";
-  servidor.send(200, "text/html", html);
+
+void onEventoWS(uint8_t idCliente, WStype_t tipo, uint8_t *payload, size_t longitud) {
+  (void)payload; (void)longitud;
+  if (tipo == WStype_CONNECTED) {
+    JsonDocument saludo;
+    saludo["tipo"]    = "saludo";
+    saludo["mensaje"] = "Ejemplo 1: espejo del boton";
+    saludo["puerto"]  = 81;
+    enviarJsonACliente(idCliente, saludo);
+
+    JsonDocument est;
+    est["tipo"]      = "estado_led";
+    est["encendido"] = ledEncendido;
+    enviarJsonACliente(idCliente, est);
+  }
 }
 
 void conectarRed() {
-  Serial.print("Conectando a ");
-  Serial.print(nombreRed);
+  Serial.print("Conectando a "); Serial.print(nombreRed);
   WiFi.mode(WIFI_STA);
   WiFi.begin(nombreRed, claveRed);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(300);
-    Serial.print(".");
+    delay(300); Serial.print(".");
     ledPlaca.setPixelColor(0, ledPlaca.Color(0, 0, 60)); ledPlaca.show(); delay(120);
     ledPlaca.setPixelColor(0, 0);                        ledPlaca.show();
   }
   Serial.println();
-  Serial.print("Conectado. IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Senal (RSSI): ");
-  Serial.print(WiFi.RSSI());
-  Serial.println(" dBm");
+  Serial.print("Conectado. IP: "); Serial.println(WiFi.localIP());
+  Serial.println("WebSocket en ws://<IP>:81");
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(pinBoton, INPUT_PULLUP);
   pinMode(pinLed, OUTPUT);
-  ledPlaca.begin();
-  ledPlaca.setBrightness(60);
-  ledPlaca.show();
+  ledPlaca.begin(); ledPlaca.setBrightness(60); ledPlaca.show();
   aplicarLed();
   conectarRed();
-
-  servidor.on("/", manejarRaiz);
-  servidor.on("/estado", manejarEstado);
-  servidor.begin();
-  Serial.println("Servidor listo. La app de Qt puede leer GET /estado.");
+  socketServidor.begin();
+  socketServidor.onEvent(onEventoWS);
   Serial.println("Presiona el boton para ENCENDER/APAGAR el LED (retencion).");
 }
 
 void loop() {
-  servidor.handleClient();
-
+  socketServidor.loop();
   int lectura = digitalRead(pinBoton);
-  if (lectura != ultimaLectura) {
-    tiempoCambio = millis();          // hubo un cambio: reinicia el reloj del rebote
-  }
+  if (lectura != ultimaLectura) tiempoCambio = millis();
   if (millis() - tiempoCambio > msAntirrebote) {
     if (lectura != estadoEstable) {
       estadoEstable = lectura;
-      if (estadoEstable == LOW) {     // flanco de bajada = pulsacion confirmada
-        ledEncendido = !ledEncendido; // RETENCION: alterna el estado
+      if (estadoEstable == LOW) {
+        ledEncendido = !ledEncendido;
         aplicarLed();
-        Serial.print("LED -> ");
-        Serial.println(ledEncendido ? "ENCENDIDO" : "APAGADO");
+        difundirEstado();
+        Serial.print("LED -> "); Serial.println(ledEncendido ? "ENCENDIDO" : "APAGADO");
       }
     }
   }

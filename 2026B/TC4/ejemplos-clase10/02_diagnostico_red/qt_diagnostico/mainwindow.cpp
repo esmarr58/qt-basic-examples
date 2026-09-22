@@ -7,13 +7,12 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QTextEdit>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
-    setWindowTitle("Ejemplo 2 - Diagnostico de red (Clase 10)");
-    gestorRed = new QNetworkAccessManager(this);
+    setWindowTitle("Ejemplo 2 - Diagnostico de red (WebSocket + JSON)");
 
     QWidget *central = new QWidget(this);
     QVBoxLayout *raiz = new QVBoxLayout(central);
@@ -29,13 +28,15 @@ MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     cuadroInfo = new QTextEdit(central);
     cuadroInfo->setReadOnly(true);
     cuadroInfo->setStyleSheet("font-family:monospace;");
-    cuadroInfo->setPlaceholderText("Aqui apareceran los datos de red que reporta la ESP32 (GET /info).");
+    cuadroInfo->setPlaceholderText("Datos de red que reporta la ESP32 (JSON por WebSocket).");
     raiz->addWidget(cuadroInfo);
 
     setCentralWidget(central);
-    resize(460, 320);
+    resize(480, 340);
 
     connect(botonConsultar, &QPushButton::clicked, this, &MainWindow::alConsultar);
+    connect(&socket, &QWebSocket::connected, this, &MainWindow::alConectarSocket);
+    connect(&socket, &QWebSocket::textMessageReceived, this, &MainWindow::alRecibirMensaje);
 }
 
 void MainWindow::alConsultar() {
@@ -43,16 +44,30 @@ void MainWindow::alConsultar() {
     if (ip.isEmpty())
         return;
     cuadroInfo->setPlainText("Consultando...");
-    QNetworkRequest peticion(QUrl("http://" + ip + "/info"));
-    QNetworkReply *respuesta = gestorRed->get(peticion);
-    connect(respuesta, &QNetworkReply::finished, this, [this, respuesta]() {
-        if (respuesta->error() == QNetworkReply::NoError) {
-            cuadroInfo->setPlainText(QString::fromUtf8(respuesta->readAll()));
-        } else {
-            cuadroInfo->setPlainText("No se pudo consultar la ESP32.\n"
-                                     "Revisa la IP y que tu PC este en la red GWN571D04.\n\n"
-                                     "Detalle: " + respuesta->errorString());
-        }
-        respuesta->deleteLater();
-    });
+    if (socket.state() != QAbstractSocket::ConnectedState) {
+        socket.open(QUrl("ws://" + ip + ":81"));   // al conectar se pide "leer_red"
+    } else {
+        QJsonObject peticion; peticion["tipo"] = "leer_red";
+        socket.sendTextMessage(QJsonDocument(peticion).toJson(QJsonDocument::Compact));
+    }
+}
+
+void MainWindow::alConectarSocket() {
+    QJsonObject peticion; peticion["tipo"] = "leer_red";
+    socket.sendTextMessage(QJsonDocument(peticion).toJson(QJsonDocument::Compact));
+}
+
+void MainWindow::alRecibirMensaje(const QString &mensaje) {
+    const QJsonObject obj = QJsonDocument::fromJson(mensaje.toUtf8()).object();
+    if (obj.value("tipo").toString() != "datos_red")
+        return;
+    QString t;
+    t += "SSID:    " + obj.value("ssid").toString()    + "\n";
+    t += "IP:      " + obj.value("ip").toString()      + "\n";
+    t += "Mascara: " + obj.value("mascara").toString() + "\n";
+    t += "Gateway: " + obj.value("gateway").toString() + "\n";
+    t += "DNS:     " + obj.value("dns").toString()     + "\n";
+    t += "MAC:     " + obj.value("mac").toString()     + "\n";
+    t += "RSSI:    " + QString::number(obj.value("rssi").toInt()) + " dBm\n";
+    cuadroInfo->setPlainText(t);
 }

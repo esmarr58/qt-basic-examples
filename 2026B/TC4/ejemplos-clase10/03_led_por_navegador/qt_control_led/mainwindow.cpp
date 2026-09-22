@@ -6,13 +6,12 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QLabel>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
-    setWindowTitle("Ejemplo 3 - Control del LED (Clase 10)");
-    gestorRed = new QNetworkAccessManager(this);
+    setWindowTitle("Ejemplo 3 - Control del LED (WebSocket + JSON)");
 
     QWidget *central = new QWidget(this);
     QVBoxLayout *raiz = new QVBoxLayout(central);
@@ -20,7 +19,9 @@ MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     QHBoxLayout *fila = new QHBoxLayout();
     fila->addWidget(new QLabel("IP de la ESP32:", central));
     campoIp = new QLineEdit("192.168.0.50", central);
+    botonConectar = new QPushButton("Conectar", central);
     fila->addWidget(campoIp);
+    fila->addWidget(botonConectar);
     raiz->addLayout(fila);
 
     QHBoxLayout *filaBotones = new QHBoxLayout();
@@ -32,38 +33,49 @@ MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
     filaBotones->addWidget(botonApagar);
     raiz->addLayout(filaBotones);
 
-    etiquetaEstado = new QLabel("Escribe la IP de la ESP32 y usa los botones.", central);
+    etiquetaEstado = new QLabel("Conecta con la IP de la ESP32 y usa los botones.", central);
     etiquetaEstado->setAlignment(Qt::AlignCenter);
     etiquetaEstado->setWordWrap(true);
     raiz->addWidget(etiquetaEstado);
 
     setCentralWidget(central);
-    resize(440, 220);
+    resize(470, 240);
 
+    connect(botonConectar, &QPushButton::clicked, this, &MainWindow::alConectar);
     connect(botonEncender, &QPushButton::clicked, this, &MainWindow::encender);
     connect(botonApagar,   &QPushButton::clicked, this, &MainWindow::apagar);
+    connect(&socket, &QWebSocket::connected, this, &MainWindow::alConectarSocket);
+    connect(&socket, &QWebSocket::textMessageReceived, this, &MainWindow::alRecibirMensaje);
 }
 
-void MainWindow::encender() {
-    enviarComando("/encender", "LED ENCENDIDO");
-}
-
-void MainWindow::apagar() {
-    enviarComando("/apagar", "LED APAGADO");
-}
-
-void MainWindow::enviarComando(const QString &ruta, const QString &mensajeOk) {
+void MainWindow::alConectar() {
     const QString ip = campoIp->text().trimmed();
     if (ip.isEmpty())
         return;
-    QNetworkRequest peticion(QUrl("http://" + ip + ruta));
-    QNetworkReply *respuesta = gestorRed->get(peticion);
-    connect(respuesta, &QNetworkReply::finished, this, [this, respuesta, mensajeOk]() {
-        if (respuesta->error() == QNetworkReply::NoError) {
-            etiquetaEstado->setText(mensajeOk);
-        } else {
-            etiquetaEstado->setText("Sin conexion. Revisa la IP y la red GWN571D04.");
-        }
-        respuesta->deleteLater();
-    });
+    socket.open(QUrl("ws://" + ip + ":81"));
+    etiquetaEstado->setText("Conectando a ws://" + ip + ":81 ...");
+}
+
+void MainWindow::alConectarSocket() {
+    etiquetaEstado->setText("Conectado. Usa ENCENDER / APAGAR.");
+}
+
+void MainWindow::enviarLed(bool encendido) {
+    if (socket.state() != QAbstractSocket::ConnectedState) {
+        etiquetaEstado->setText("Primero conecta con la ESP32.");
+        return;
+    }
+    QJsonObject comando;
+    comando["tipo"]      = "led";
+    comando["encendido"] = encendido;
+    socket.sendTextMessage(QJsonDocument(comando).toJson(QJsonDocument::Compact));
+}
+
+void MainWindow::encender() { enviarLed(true); }
+void MainWindow::apagar()   { enviarLed(false); }
+
+void MainWindow::alRecibirMensaje(const QString &mensaje) {
+    const QJsonObject obj = QJsonDocument::fromJson(mensaje.toUtf8()).object();
+    if (obj.value("tipo").toString() == "estado_led")
+        etiquetaEstado->setText(obj.value("encendido").toBool() ? "LED ENCENDIDO" : "LED APAGADO");
 }
