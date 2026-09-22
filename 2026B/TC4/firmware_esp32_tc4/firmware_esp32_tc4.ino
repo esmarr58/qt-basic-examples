@@ -20,18 +20,19 @@
  *
  *  Placa (Arduino IDE 1.8.19): "ESP32S3 Dev Module".
  *
- *  PROTOCOLO JSON
+ *  PROTOCOLO JSON  (mismo esquema que la Practica 4: campo "tipo")
  *  --------------
  *  Computadora  ->  ESP32 (comandos):
- *     {"comando":"salida", "canal":1, "estado":true}   // canal 1..4 (IN1..IN4)
- *     {"comando":"rgb",    "estado":true}              // LED RGB de la placa
- *     {"comando":"consulta"}                           // pedir el estado actual
+ *     {"tipo":"salida", "canal":1, "encendido":true}   // canal 1..4 (IN1..IN4)
+ *     {"tipo":"rgb",    "encendido":true}              // LED RGB de la placa
+ *     {"tipo":"consulta"}                              // pedir el estado actual
  *
- *  ESP32  ->  Computadora (eventos y confirmaciones):
- *     {"evento":"boton", "boton":"reproducir"}
- *     {"evento":"boton", "boton":"pausar"}
- *     {"evento":"boton", "boton":"boot"}
- *     {"evento":"estado","salidas":[false,false,false,false],"rgb":false}
+ *  ESP32  ->  Computadora (saludo, eventos y confirmaciones):
+ *     {"tipo":"saludo", "mensaje":"...", "puerto":81}  // al conectar
+ *     {"tipo":"boton",  "boton":"reproducir"}
+ *     {"tipo":"boton",  "boton":"pausar"}
+ *     {"tipo":"boton",  "boton":"boot"}
+ *     {"tipo":"estado", "salidas":[false,false,false,false], "rgb":false}
  * ============================================================================
  */
 
@@ -109,7 +110,7 @@ void aplicarSalida(int canal, bool encendido) {
 // ---------------------------------------------------------------------------
 void enviarEstado(uint8_t numCliente) {
   JsonDocument documento;
-  documento["evento"] = "estado";
+  documento["tipo"] = "estado";
   JsonArray salidas = documento["salidas"].to<JsonArray>();
   for (int i = 0; i < cantidadSalidas; i++) {
     salidas.add(estadoSalidas[i]);
@@ -126,8 +127,8 @@ void enviarEstado(uint8_t numCliente) {
 // ---------------------------------------------------------------------------
 void avisarBoton(const char* nombreBoton) {
   JsonDocument documento;
-  documento["evento"] = "boton";
-  documento["boton"]  = nombreBoton;
+  documento["tipo"]  = "boton";
+  documento["boton"] = nombreBoton;
 
   String texto;
   serializeJson(documento, texto);
@@ -144,25 +145,25 @@ void procesarComando(uint8_t numCliente, uint8_t* carga, size_t longitud) {
   DeserializationError error = deserializeJson(documento, carga, longitud);
   if (error) {
     Serial.println("JSON invalido, se ignora.");
-    servidorSocket.sendTXT(numCliente, "{\"evento\":\"error\",\"detalle\":\"json_invalido\"}");
+    servidorSocket.sendTXT(numCliente, "{\"tipo\":\"error\",\"detalle\":\"json_invalido\"}");
     return;
   }
 
-  const char* comando = documento["comando"];
-  if (comando == nullptr) return;
+  const char* tipoMsg = documento["tipo"];
+  if (tipoMsg == nullptr) return;
 
-  if (strcmp(comando, "salida") == 0) {
-    int  canal  = documento["canal"] | 0;
-    bool estado = documento["estado"] | false;
-    aplicarSalida(canal, estado);
+  if (strcmp(tipoMsg, "salida") == 0) {
+    int  canal     = documento["canal"] | 0;
+    bool encendido = documento["encendido"] | false;
+    aplicarSalida(canal, encendido);
     enviarEstado(numCliente);                 // confirmamos el nuevo estado
   }
-  else if (strcmp(comando, "rgb") == 0) {
-    bool estado = documento["estado"] | false;
-    aplicarLedRgb(estado);
+  else if (strcmp(tipoMsg, "rgb") == 0) {
+    bool encendido = documento["encendido"] | false;
+    aplicarLedRgb(encendido);
     enviarEstado(numCliente);
   }
-  else if (strcmp(comando, "consulta") == 0) {
+  else if (strcmp(tipoMsg, "consulta") == 0) {
     enviarEstado(numCliente);
   }
 }
@@ -176,6 +177,14 @@ void alEventoWebSocket(uint8_t numCliente, WStype_t tipo, uint8_t* carga, size_t
       IPAddress ip = servidorSocket.remoteIP(numCliente);
       Serial.print("Cliente conectado: ");
       Serial.println(ip.toString());
+      // saludo inicial (igual que la Practica 4)
+      JsonDocument saludo;
+      saludo["tipo"]    = "saludo";
+      saludo["mensaje"] = "Servidor TC4 listo";
+      saludo["puerto"]  = 81;
+      String textoSaludo;
+      serializeJson(saludo, textoSaludo);
+      servidorSocket.sendTXT(numCliente, textoSaludo);
       enviarEstado(numCliente);               // al conectar, mandamos el estado
       break;
     }

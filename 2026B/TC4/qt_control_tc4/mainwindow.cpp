@@ -124,17 +124,17 @@ void MainWindow::enviarJson(const QJsonObject &objeto)
 void MainWindow::enviarSalida(int canal, bool estado)
 {
     QJsonObject objeto;
-    objeto["comando"] = "salida";
-    objeto["canal"]   = canal;
-    objeto["estado"]  = estado;
+    objeto["tipo"]      = "salida";
+    objeto["canal"]     = canal;
+    objeto["encendido"] = estado;
     enviarJson(objeto);
 }
 
 void MainWindow::enviarRgb(bool estado)
 {
     QJsonObject objeto;
-    objeto["comando"] = "rgb";
-    objeto["estado"]  = estado;
+    objeto["tipo"]      = "rgb";
+    objeto["encendido"] = estado;
     enviarJson(objeto);
 }
 
@@ -151,8 +151,8 @@ void MainWindow::alRecibirMensaje(const QString &mensaje)
 
 void MainWindow::interpretarEvento(const QJsonObject &objeto)
 {
-    QString evento = objeto.value("evento").toString();
-    if (evento == "boton") {
+    QString tipo = objeto.value("tipo").toString();
+    if (tipo == "boton") {
         QString boton = objeto.value("boton").toString();
         ui->etiquetaBoton->setText("Último botón: " + boton);
         if (boton == "reproducir")   reproducirSonido();

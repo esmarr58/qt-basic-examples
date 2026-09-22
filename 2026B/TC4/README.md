@@ -56,21 +56,24 @@ Entradas con `INPUT_PULLUP` (reposo = HIGH, presionado = LOW).
 
 ## Protocolo JSON
 
+Todos los mensajes llevan un campo **`"tipo"`** (mismo esquema que la Práctica 4 y los ejemplos de la Clase 10).
+
 **Computadora → ESP32 (comandos):**
 
 ```json
-{"comando":"salida", "canal":1, "estado":true}
-{"comando":"rgb",    "estado":true}
-{"comando":"consulta"}
+{"tipo":"salida", "canal":1, "encendido":true}
+{"tipo":"rgb",    "encendido":true}
+{"tipo":"consulta"}
 ```
 
-**ESP32 → Computadora (eventos y estado):**
+**ESP32 → Computadora (saludo, eventos y estado):**
 
 ```json
-{"evento":"boton",  "boton":"reproducir"}
-{"evento":"boton",  "boton":"pausar"}
-{"evento":"boton",  "boton":"boot"}
-{"evento":"estado", "salidas":[false,false,false,false], "rgb":false}
+{"tipo":"saludo", "mensaje":"Servidor TC4 listo", "puerto":81}
+{"tipo":"boton",  "boton":"reproducir"}
+{"tipo":"boton",  "boton":"pausar"}
+{"tipo":"boton",  "boton":"boot"}
+{"tipo":"estado", "salidas":[false,false,false,false], "rgb":false}
 ```
 
 Sigue el patrón **JSON-RPC** (petición / respuesta / notificación) sobre el transporte WebSocket.
