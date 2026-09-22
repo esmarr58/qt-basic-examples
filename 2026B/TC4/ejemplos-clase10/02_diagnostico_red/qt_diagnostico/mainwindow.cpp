@@ -11,7 +11,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("Ejemplo 2 - Diagnostico de red (WebSocket + JSON)");
 
     QWidget *central = new QWidget(this);

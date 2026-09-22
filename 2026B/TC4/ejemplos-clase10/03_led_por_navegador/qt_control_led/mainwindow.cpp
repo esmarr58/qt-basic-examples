@@ -10,7 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-MainWindow::MainWindow(QWidget *padre) : QMainWindow(padre) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("Ejemplo 3 - Control del LED (WebSocket + JSON)");
 
     QWidget *central = new QWidget(this);

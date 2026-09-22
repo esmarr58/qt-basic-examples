@@ -13,7 +13,7 @@ class QLabel;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *padre = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
 
 private slots:
     void alConectar();
