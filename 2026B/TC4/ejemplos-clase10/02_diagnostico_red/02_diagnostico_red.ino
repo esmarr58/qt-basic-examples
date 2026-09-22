@@ -2,22 +2,26 @@
  * Ejemplo 2 (Clase 10) - Diagnostico de la conexion a la red del salon.
  * Diseno de Interfaces (I7262) - Dr. Ruben Estrada Marmolejo, CUCEI-UDG.
  *
- * Solo prueba la RED (sin botones): la placa se conecta al Access Point del salon
- * e imprime TODOS los datos de red en el Monitor Serial (IP, mascara, gateway, DNS,
- * MAC y potencia de senal). El LED RGB indica el estado:
- *     rojo = conectando / sin red      verde = conectada
- * Si la red se cae, reintenta solo. Sirve para confirmar que la PC y la ESP32
- * quedaran en la MISMA red antes del TC4.
+ * Prueba la RED (sin botones): la placa se conecta al Access Point e imprime en el
+ * Monitor Serial IP, mascara, gateway, DNS, MAC y RSSI. El LED RGB indica el estado
+ * (rojo=conectando, verde=conectada) y reintenta si se cae.
  *
- * Librerias: WiFi (core ESP32) + Adafruit NeoPixel. Placa: "ESP32S3 Dev Module".
+ * EMPAREJAMIENTO con Qt: ademas levanta un servidor web con
+ *      GET /info  -> devuelve esos mismos datos en texto
+ * para que la app de Qt (o un navegador) los CONSULTE por la red y confirme que la
+ * PC y la ESP32 quedan en la MISMA red antes del TC4.
+ *
+ * Librerias: WiFi + WebServer (core ESP32) + Adafruit NeoPixel. Placa: "ESP32S3 Dev Module".
  */
 #include <WiFi.h>
+#include <WebServer.h>
 #include <Adafruit_NeoPixel.h>
 
 const char* nombreRed = "GWN571D04";
 const char* claveRed  = "ESP32CUCEI$$";
 
 const int pinLedRgb = 48;
+WebServer servidor(80);
 Adafruit_NeoPixel ledPlaca(1, pinLedRgb, NEO_GRB + NEO_KHZ800);
 
 void color(uint8_t r, uint8_t g, uint8_t b) {
@@ -25,16 +29,26 @@ void color(uint8_t r, uint8_t g, uint8_t b) {
   ledPlaca.show();
 }
 
+String textoDatosRed() {
+  String s;
+  s += "SSID:    " + WiFi.SSID() + "\n";
+  s += "IP:      " + WiFi.localIP().toString() + "\n";
+  s += "Mascara: " + WiFi.subnetMask().toString() + "\n";
+  s += "Gateway: " + WiFi.gatewayIP().toString() + "\n";
+  s += "DNS:     " + WiFi.dnsIP().toString() + "\n";
+  s += "MAC:     " + WiFi.macAddress() + "\n";
+  s += "RSSI:    " + String(WiFi.RSSI()) + " dBm\n";
+  return s;
+}
+
 void imprimirDatosRed() {
   Serial.println("----- Datos de red -----");
-  Serial.print("SSID:    "); Serial.println(WiFi.SSID());
-  Serial.print("IP:      "); Serial.println(WiFi.localIP());
-  Serial.print("Mascara: "); Serial.println(WiFi.subnetMask());
-  Serial.print("Gateway: "); Serial.println(WiFi.gatewayIP());
-  Serial.print("DNS:     "); Serial.println(WiFi.dnsIP());
-  Serial.print("MAC:     "); Serial.println(WiFi.macAddress());
-  Serial.print("RSSI:    "); Serial.print(WiFi.RSSI()); Serial.println(" dBm");
+  Serial.print(textoDatosRed());
   Serial.println("------------------------");
+}
+
+void manejarInfo() {
+  servidor.send(200, "text/plain", textoDatosRed());
 }
 
 void conectar() {
@@ -63,15 +77,22 @@ void setup() {
   ledPlaca.begin();
   ledPlaca.setBrightness(60);
   conectar();
+  servidor.on("/info", manejarInfo);
+  servidor.begin();
+  Serial.println("Servidor listo. La app de Qt puede consultar GET /info.");
 }
 
+unsigned long ultimoReporte = 0;
+
 void loop() {
+  servidor.handleClient();
+
   if (WiFi.status() != WL_CONNECTED) {
     color(60, 0, 0);
     conectar();                    // reintenta si se cayo
-  } else {
-    color(0, 80, 0);
-    imprimirDatosRed();
   }
-  delay(3000);
+  if (millis() - ultimoReporte > 3000) {   // reporte periodico al Serial
+    ultimoReporte = millis();
+    if (WiFi.status() == WL_CONNECTED) { color(0, 80, 0); imprimirDatosRed(); }
+  }
 }

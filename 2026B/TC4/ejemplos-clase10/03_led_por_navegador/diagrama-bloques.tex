@@ -1,0 +1,89 @@
+\documentclass[border=12pt]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, shapes.symbols, arrows.meta, calc, fit, backgrounds}
+
+% ---- Paleta de colores ----
+\definecolor{azulPC}{RGB}{33,102,172}      % PC / App Qt
+\definecolor{azulPCbg}{RGB}{222,235,247}
+\definecolor{verdeESP}{RGB}{35,132,67}     % ESP32
+\definecolor{verdeESPbg}{RGB}{225,245,229}
+\definecolor{grisRed}{RGB}{110,110,110}    % Red WiFi
+\definecolor{grisRedbg}{RGB}{238,238,238}
+\definecolor{naranjaHW}{RGB}{217,120,20}   % Hardware
+\definecolor{naranjaHWbg}{RGB}{253,237,214}
+\definecolor{textoOsc}{RGB}{40,40,40}
+
+\begin{document}
+\begin{tikzpicture}[
+  font=\sffamily,
+  >={Latex[length=2.6mm]},
+  % --- estilos de bloque ---
+  bloque/.style={
+    rectangle, rounded corners=6pt, draw, line width=1pt,
+    align=center, inner sep=8pt, minimum height=22mm, text=textoOsc
+  },
+  pc/.style={bloque, draw=azulPC, fill=azulPCbg, minimum width=46mm},
+  esp/.style={bloque, draw=verdeESP, fill=verdeESPbg, minimum width=46mm},
+  hw/.style={
+    rectangle, rounded corners=4pt, draw=naranjaHW, fill=naranjaHWbg,
+    line width=0.9pt, align=left, inner sep=6pt, text=textoOsc,
+    minimum width=52mm
+  },
+  nube/.style={
+    cloud, cloud puffs=13, cloud puff arc=110, aspect=2.3,
+    draw=grisRed, fill=grisRedbg, line width=1pt, align=center,
+    inner sep=2pt, minimum width=52mm, minimum height=30mm, text=textoOsc
+  },
+  etiq/.style={font=\sffamily\footnotesize, align=center, text=textoOsc},
+  etiqRet/.style={font=\sffamily\footnotesize, align=center, text=grisRed}
+]
+
+% ================= BLOQUES PRINCIPALES (fila horizontal) =================
+\node[pc]  (pc)  {\textbf{PC — App Qt}\\\textbf{(Control del LED)}\\[2pt]
+  \footnotesize Botones \textbf{ENCENDER} / \textbf{APAGAR}\\
+  \footnotesize$\rightarrow$ HTTP GET a\\
+  \footnotesize\texttt{/encender} · \texttt{/apagar}\\[2pt]
+  \scriptsize(también sirve un navegador)};
+
+\node[nube] (red) [right=34mm of pc] {\textbf{Red WiFi}\\\textbf{SSID GWN571D04}};
+
+\node[esp]  (esp) [right=34mm of red] {\textbf{ESP32-S3 (Arduino)}\\\textbf{Servidor web}\\[2pt]
+  \footnotesize Rutas:\\
+  \footnotesize\texttt{/}~·~\texttt{/encender}~·~\texttt{/apagar}};
+
+% ================= FLECHAS PC <-> RED <-> ESP32 =================
+% Ida: PC -> Red
+\draw[->, line width=1.1pt, azulPC] (pc.east) -- node[etiq, above, yshift=1pt]{GET \texttt{/encender}}
+      node[etiq, below, yshift=-1pt]{GET \texttt{/apagar}} (red.west);
+% Ida: Red -> ESP32
+\draw[->, line width=1.1pt, verdeESP] (red.east) -- node[etiq, above, yshift=1pt]{GET \texttt{/encender}}
+      node[etiq, below, yshift=-1pt]{GET \texttt{/apagar}} (esp.west);
+
+% Retorno: ESP32 -> Red -> PC (arco inferior)
+\draw[->, line width=1.0pt, grisRed]
+   (esp.south west) ++(0,-2mm)
+   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{página HTML / estado}
+   ($(red.south east)+(0,-2mm)$);
+\draw[->, line width=1.0pt, grisRed]
+   ($(red.south west)+(0,-2mm)$)
+   to[out=210, in=330] node[etiqRet, below, yshift=-1pt]{página HTML / estado}
+   ($(pc.south east)+(0,-2mm)$);
+
+% ================= BLOQUE HARDWARE (colgando del ESP32) =================
+\node[hw] (hw) [below=22mm of esp] {%
+  \textbf{Hardware}\\[3pt]
+  \textbullet~LED \texttt{GPIO4} + R 330\,$\Omega$\\
+  \textbullet~LED RGB \texttt{GPIO48}\\
+  \textbullet~Pulsador \texttt{GPIO15} (se muestra su estado)};
+
+\draw[->, line width=1.1pt, naranjaHW] (esp.south) -- node[etiq, right, xshift=1pt, text=naranjaHW]{control / lectura} (hw.north);
+
+% ================= NOTA AL PIE =================
+\node[etiq, below=8mm of hw, text width=150mm] (nota) {%
+  \itshape Mismo ida y vuelta PC$\leftrightarrow$ESP32 que el TC4, pero con HTTP en vez de WebSockets+JSON.};
+
+\end{tikzpicture}
+\end{document}

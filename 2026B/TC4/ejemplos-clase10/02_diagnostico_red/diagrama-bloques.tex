@@ -1,0 +1,107 @@
+\documentclass[border=12pt]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, shapes.symbols, arrows.meta, calc, fit, backgrounds}
+
+% ---- Paleta ----
+\definecolor{colPC}{HTML}{1E6FBF}      % azul PC
+\definecolor{colPCfill}{HTML}{E7F0FB}
+\definecolor{colESP}{HTML}{2E9E5B}     % verde ESP32
+\definecolor{colESPfill}{HTML}{E6F5EC}
+\definecolor{colRed}{HTML}{6B7280}     % gris red
+\definecolor{colRedfill}{HTML}{F1F2F4}
+\definecolor{colHW}{HTML}{E08324}      % naranja hardware
+\definecolor{colHWfill}{HTML}{FCEFE0}
+\definecolor{colTxt}{HTML}{20303F}
+
+\newcommand{\titulo}{\bfseries\normalsize}
+
+\begin{document}
+\begin{tikzpicture}[
+  font=\sffamily,
+  >={Latex[length=3.2mm]},
+  node distance=16mm and 26mm,
+  bloque/.style={
+    rectangle, rounded corners=6pt, draw, line width=1pt,
+    minimum width=48mm, minimum height=30mm, align=center,
+    text=colTxt, inner sep=5pt
+  },
+  titulo/.style={font=\sffamily\bfseries},
+  etiqueta/.style={font=\sffamily\footnotesize, text=colTxt, align=center},
+  flecha/.style={line width=1.1pt},
+]
+
+% ===================== Bloques principales (en fila) =====================
+% --- PC (izquierda) ---
+\node[bloque, draw=colPC, fill=colPCfill] (pc) {
+  {\titulo\textcolor{colPC}{PC — App Qt}}\\[1pt]
+  {\bfseries(Diagnóstico)}\\[4pt]
+  \footnotesize Al presionar \textbf{«Consultar»}\\
+  \footnotesize hace \textbf{HTTP GET} a\\
+  \footnotesize \texttt{http://<IP>/info}\\
+  \footnotesize y muestra el texto\\
+  \footnotesize en un cuadro.
+};
+
+% --- Red WiFi (centro) : nube ---
+\node[cloud, cloud puffs=13, cloud puff arc=120, aspect=2.6,
+      draw=colRed, line width=1pt, fill=colRedfill, text=colTxt,
+      minimum width=52mm, minimum height=34mm, align=center,
+      right=of pc] (red) {
+  {\titulo\textcolor{colRed}{Red WiFi}}\\[1pt]
+  {\footnotesize SSID \texttt{GWN571D04}}
+};
+
+% --- ESP32 (derecha) ---
+\node[bloque, draw=colESP, fill=colESPfill, right=of red] (esp) {
+  {\titulo\textcolor{colESP}{ESP32-S3}}\\[1pt]
+  {\bfseries(Arduino)}\\[4pt]
+  \footnotesize Servidor web\\
+  \footnotesize ruta \texttt{/info}\\[3pt]
+  \footnotesize Responde datos\\
+  \footnotesize de la conexión.
+};
+
+% ===================== Flechas PC <-> Red =====================
+\draw[flecha, ->, colPC]
+  ([yshift=6mm]pc.east) -- node[etiqueta, above, pos=0.5]{GET \texttt{/info}}
+  ([yshift=6mm]red.west);
+\draw[flecha, ->, colRed]
+  ([yshift=-6mm]red.west) -- ([yshift=-6mm]pc.east);
+
+% ===================== Flechas Red <-> ESP32 =====================
+\draw[flecha, ->, colPC]
+  ([yshift=6mm]red.east) -- node[etiqueta, above, pos=0.5]{GET \texttt{/info}}
+  ([yshift=6mm]esp.west);
+\draw[flecha, ->, colRed]
+  ([yshift=-6mm]esp.west) --
+  node[etiqueta, below, pos=0.5]{IP, máscara, gateway,\\ DNS, MAC, RSSI}
+  ([yshift=-6mm]red.east);
+
+% ===================== Hardware colgando del ESP32 =====================
+\node[bloque, draw=colHW, fill=colHWfill, text=colTxt,
+      minimum width=52mm, minimum height=20mm,
+      below=18mm of esp] (hw) {
+  {\titulo\textcolor{colHW}{LED RGB — GPIO48}}\\[3pt]
+  \footnotesize \textcolor{red!70!black}{$\bullet$} rojo = conectando\\
+  \footnotesize \textcolor{colESP}{$\bullet$} verde = conectada
+};
+\draw[flecha, ->, colHW] (esp.south) -- (hw.north);
+
+% ===================== Nota al pie =====================
+\node[etiqueta, font=\sffamily\small, text width=150mm,
+      below=10mm of hw.south, anchor=north] (nota) {
+  \textbf{Nota:} Confirma que la PC y la ESP32 quedan en la \textbf{MISMA red}
+  (misma subred/gateway) antes del \textbf{TC4}.
+};
+
+% ===================== Marco de fondo =====================
+\begin{scope}[on background layer]
+  \node[rectangle, rounded corners=8pt, draw=colRed!40, line width=0.8pt,
+        fill=black!2, fit=(pc)(red)(esp)(hw)(nota), inner sep=9mm] {};
+\end{scope}
+
+\end{tikzpicture}
+\end{document}
