@@ -14,9 +14,15 @@ Clase17-Lotes-Epoch/
 ├── firmware_lotes/            # Firmware Arduino (ESP32-S3): lotes + sincronización de hora
 │   └── firmware_lotes.ino
 ├── qt_lotes_epoch/            # App Qt: QDateTimeAxis, lotes perdidos, botón "Sincronizar hora"
-├── diagrama-bloques.pdf
+├── firmware_ej4_lotes_websocket/   # Ejemplo 4 (ESP32): los mismos lotes por WebSocket (puerto 81)
+├── qt_ej4_lotes_websocket/         # Ejemplo 4 (Qt): cliente WebSocket (estilo TC4)
+├── diagrama-bloques.pdf             # lotes por puerto serie
+├── diagrama-bloques-websocket.pdf   # Ejemplo 4: lotes por WebSocket
 └── README.md
 ```
+
+`firmware_lotes` + `qt_lotes_epoch` usan el **puerto serie**. El **ejemplo 4** hace lo mismo por
+**WebSocket**, igual que el TC4 y la Práctica 1: es la versión con la que seguimos trabajando.
 
 ## El contrato del lote
 
@@ -58,3 +64,23 @@ Usa `esp_timer_get_time()` (64 bits) en vez de `millis()`, que es de 32 bits y r
 2. Cierra el Monitor Serie. Abre `qt_lotes_epoch/qt_lotes_epoch.pro`, compila y ejecuta.
 3. **Conectar** → observa la fecha de `t0` (¿qué año aparece?).
 4. **Sincronizar hora** → la gráfica salta a la hora actual.
+
+## Ejemplo 4: los mismos lotes por WebSocket
+
+La ESP32 es el **servidor WebSocket (puerto 81)** y Qt el **cliente**, como en el TC4.
+Mismo contrato, ahora con el campo `"tipo"`:
+
+| Sentido | Mensaje |
+|---|---|
+| ESP32 → Qt (al conectar) | `{"tipo":"saludo","mensaje":"...","puerto":81}` |
+| ESP32 → Qt (cada 0.6 s) | `{"tipo":"lote","seq":7,"t0":1792069200123,"dt":60,"sinc":true,"dist":[...]}` |
+| Qt → ESP32 (botón) | `{"tipo":"sincronizar","epoch_ms":1792069200000}` |
+| ESP32 → Qt | `{"tipo":"sincronizado","epoch_ms":1792069200000}` |
+
+1. En `firmware_ej4_lotes_websocket.ino` revisa `nombreRed` y `claveRed`. Sin hardware deja
+   `usarSensorReal = false`; con el HC-SR04 pon `true` (TRIG = GPIO 12, ECHO = GPIO 13).
+2. Abre `qt_ej4_lotes_websocket/qt_ej4_lotes_websocket.pro`, compila y ejecuta.
+3. Escribe la IP, puerto **81**, **Conectar** → ¿qué fecha tiene `t0`? → **Sincronizar hora**.
+
+Librerías: **WebSockets** (Links2004) y **ArduinoJson** v7. ArduinoJson guarda enteros de 64 bits
+en la ESP32, así que `t0` (13 dígitos) viaja completo.

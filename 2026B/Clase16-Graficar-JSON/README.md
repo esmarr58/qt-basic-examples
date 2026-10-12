@@ -12,9 +12,15 @@ Clase16-Graficar-JSON/
 │   └── firmware_contratos.ino
 ├── qt_ej1_un_valor/           # Ejemplo 1: contrato v1 -> una curva
 ├── qt_ej2_dos_valores/        # Ejemplo 2: contrato v2 -> dos curvas, doble eje Y
-├── diagrama-bloques.pdf       # El camino del dato, de la ESP32 a la gráfica
+├── firmware_ej3_websocket/    # Ejemplo 3 (ESP32): contrato v2 por WebSocket (servidor, puerto 81)
+├── qt_ej3_websocket/          # Ejemplo 3 (Qt): cliente WebSocket + doble eje Y (estilo TC4)
+├── diagrama-bloques.pdf             # Ejemplos 1 y 2: el camino del dato por el puerto serie
+├── diagrama-bloques-websocket.pdf   # Ejemplo 3: el mismo camino por WebSocket
 └── README.md
 ```
+
+Los ejemplos 1 y 2 usan el **puerto serie (USB)**. El ejemplo 3 usa **WebSocket**, igual que el
+TC4 y la Práctica 1: es la forma con la que trabajamos el resto del curso.
 
 ## Los contratos
 
@@ -52,3 +58,25 @@ Qt:    readyRead -> canReadLine/readLine -> QJsonDocument::fromJson -> QLineSeri
 
 `readyRead` **no** equivale a un mensaje: el serie llega en pedazos. Por eso se lee solo con
 `canReadLine()` y `readLine()`, nunca con `readAll()`.
+
+## Ejemplo 3: el mismo contrato por WebSocket
+
+Igual que en el TC4, la ESP32 es el **servidor WebSocket (puerto 81)** y Qt es el **cliente**.
+Cada mensaje lleva el campo `"tipo"`:
+
+| Sentido | Mensaje |
+|---|---|
+| ESP32 → Qt (al conectar) | `{"tipo":"saludo","mensaje":"...","puerto":81}` |
+| ESP32 → Qt (cada 0.5 s) | `{"tipo":"medicion","t":24.8,"h":55.3}` |
+
+**Qué cambia respecto al puerto serie:** cada mensaje WebSocket llega **completo** a
+`textMessageReceived`, así que ya no hace falta `canReadLine()` ni el `\n`. Además ya no
+importa el cable: basta con estar en la misma red.
+
+**Requisitos extra:** librerías **WebSockets** (Links2004) y **ArduinoJson** v7 (las del TC4);
+en Qt, el módulo **websockets**.
+
+1. En `firmware_ej3_websocket.ino` revisa `nombreRed` y `claveRed` (Access Point del salón) y carga el firmware.
+   En el Monitor Serie (115200) aparece la **IP** de la ESP32.
+2. Abre `qt_ej3_websocket/qt_ej3_websocket.pro`, compila y ejecuta.
+3. Escribe la IP, puerto **81**, y presiona **Conectar**.
