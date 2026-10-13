@@ -1,0 +1,98 @@
+\documentclass[border=12pt]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, shapes.symbols, arrows.meta, calc, fit, backgrounds}
+
+% ---- Paleta de colores (misma que los diagramas del TC4) ----
+\definecolor{azulPC}{RGB}{33,102,172}      % PC / App Qt
+\definecolor{azulPCbg}{RGB}{222,235,247}
+\definecolor{verdeESP}{RGB}{35,132,67}     % ESP32
+\definecolor{verdeESPbg}{RGB}{225,245,229}
+\definecolor{grisRed}{RGB}{110,110,110}    % Red WiFi
+\definecolor{grisRedbg}{RGB}{238,238,238}
+\definecolor{naranjaHW}{RGB}{217,120,20}   % Hardware
+\definecolor{naranjaHWbg}{RGB}{253,237,214}
+\definecolor{textoOsc}{RGB}{40,40,40}
+
+\begin{document}
+\begin{tikzpicture}[
+  font=\sffamily,
+  >={Latex[length=2.6mm]},
+  paso/.style={
+    rectangle, rounded corners=4pt, draw, line width=0.9pt, fill=white,
+    align=center, inner sep=5pt, minimum width=44mm, minimum height=10mm,
+    text=textoOsc, font=\sffamily\small
+  },
+  pasoPC/.style={paso, draw=azulPC},
+  pasoESP/.style={paso, draw=verdeESP},
+  marco/.style={rectangle, rounded corners=8pt, line width=1.1pt, inner sep=7pt},
+  hw/.style={
+    rectangle, rounded corners=4pt, draw=naranjaHW, fill=naranjaHWbg,
+    line width=0.9pt, align=left, inner sep=6pt, text=textoOsc
+  },
+  nube/.style={
+    cloud, cloud puffs=13, cloud puff arc=110, aspect=2.0,
+    draw=grisRed, fill=grisRedbg, line width=1pt, align=center,
+    inner sep=2pt, minimum width=42mm, minimum height=24mm, text=textoOsc
+  },
+  etiq/.style={font=\sffamily\footnotesize, align=center, text=textoOsc},
+  etiqRet/.style={font=\sffamily\footnotesize, align=center, text=grisRed},
+  flecha/.style={->, line width=1.0pt}
+]
+
+% ======================= PC: App Qt (columna izquierda) =======================
+\node[pasoPC] (desl) {\texttt{deslizadorAngulo} / \texttt{cajaAngulo}\\\scriptsize botones 0° · 90° · 180°};
+\node[pasoPC, below=7mm of desl] (sol) {\texttt{solicitarAngulo()}\\\scriptsize máx. 1 mensaje / 50 ms (\texttt{QTimer})};
+\node[pasoPC, below=7mm of sol] (env) {\texttt{enviarJson()}\\\scriptsize \texttt{QWebSocket::sendTextMessage}};
+\draw[flecha, azulPC] (desl) -- (sol);
+\draw[flecha, azulPC] (sol) -- (env);
+
+% ======================= Red WiFi (a la altura de enviarJson) =======================
+\node[nube, right=30mm of env] (red) {\textbf{Red WiFi}\\\textbf{SSID GWN571D04}\\[2pt]\footnotesize\texttt{ws://<IP>:81}};
+
+% ======================= ESP32 (columna derecha) =======================
+\node[pasoESP, right=40mm of red] (evento) {\texttt{alEventoWebSocket()}\\\scriptsize \texttt{WStype\_TEXT}};
+\node[pasoESP, below=7mm of evento] (proc) {\texttt{procesarComando()}\\\scriptsize valida y recorta a 0..180};
+\node[pasoESP, below=7mm of proc] (write) {\texttt{servo.write(angulo)}\\\scriptsize PWM 50 Hz, 500–2400\,µs};
+\node[pasoESP, below=7mm of write] (ack) {\texttt{avisarAngulo()}\\\scriptsize \texttt{broadcastTXT} a todos};
+\draw[flecha, verdeESP] (evento) -- (proc);
+\draw[flecha, verdeESP] (proc) -- (write);
+\draw[flecha, verdeESP] (write) -- (ack);
+
+% Regreso en la App Qt, a la altura de avisarAngulo()
+\node[pasoPC] (interp) at (env |- ack) {\texttt{interpretarEvento()}\\\scriptsize \texttt{etiquetaConfirmado} (ángulo real)};
+
+\begin{scope}[on background layer]
+  \node[marco, draw=azulPC, fill=azulPCbg, fit=(desl)(interp),
+        label={[font=\sffamily\bfseries, text=azulPC]above:PC — App Qt (cliente)}] (pc) {};
+  \node[marco, draw=verdeESP, fill=verdeESPbg, fit=(evento)(ack),
+        label={[font=\sffamily\bfseries, text=verdeESP]above:ESP32-S3 — servidor WebSocket :81}] (esp) {};
+\end{scope}
+
+% ======================= Ida: comando "servo" =======================
+\draw[flecha, azulPC, line width=1.1pt] (env.east) -- node[etiq, above]{\scriptsize WebSocket}
+      node[etiq, below]{\scriptsize sobre WiFi} (red.west);
+\draw[flecha, verdeESP, line width=1.1pt] (red.east) -- node[etiq, above]{\scriptsize\texttt{\{"tipo":"servo",}}
+      node[etiq, below]{\scriptsize\texttt{"angulo":90\}}} (evento.west);
+
+% ======================= Regreso: confirmación =======================
+\draw[flecha, grisRed, line width=1.1pt] (ack.west) -- node[etiqRet, above]{\scriptsize\texttt{\{"tipo":"servo\_ack","angulo":90\}}}
+      node[etiqRet, below]{\scriptsize mismo WebSocket, sentido contrario} (interp.east);
+
+% ======================= Hardware =======================
+\node[hw, right=14mm of write, xshift=7pt] (sg90) {%
+  \textbf{Servo SG90}\\[3pt]
+  \textbullet~naranja: señal $\leftarrow$ \texttt{GPIO18}\\
+  \textbullet~rojo: +5\,V\\
+  \textbullet~café: GND (común)};
+\draw[flecha, naranjaHW, line width=1.1pt] (write.east) -- node[etiq, above, text=naranjaHW, pos=0.6]{\scriptsize pulso} (sg90.west);
+
+% ======================= Nota al pie =======================
+\node[etiq, below=9mm of $(interp.south)!0.5!(ack.south)$, text width=200mm] {%
+  \itshape Al conectar, la ESP32 manda \texttt{\{"tipo":"saludo",...,"angulo":n\}}; si el JSON es inválido o falta \texttt{angulo},\\
+  responde \texttt{\{"tipo":"error","mensaje":"..."\}} solo a ese cliente.};
+
+\end{tikzpicture}
+\end{document}
