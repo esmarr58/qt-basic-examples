@@ -84,9 +84,9 @@
 % ======================= Hardware =======================
 \node[hw, right=14mm of write, xshift=7pt] (sg90) {%
   \textbf{Servo SG90}\\[3pt]
-  \textbullet~naranja: señal $\leftarrow$ \texttt{GPIO18}\\
-  \textbullet~rojo: +5\,V\\
-  \textbullet~café: GND (común)};
+  \textbullet~naranja: señal $\leftarrow$ \texttt{GPIO14}\\
+  \textbullet~rojo: +5\,V (pin 5V)\\
+  \textbullet~café: GND\\[1pt]{\scriptsize directo en J1: GPIO14 · 5V · GND}};
 \draw[flecha, naranjaHW, line width=1.1pt] (write.east) -- node[etiq, above, text=naranjaHW, pos=0.6]{\scriptsize pulso} (sg90.west);
 
 % ======================= Nota al pie =======================

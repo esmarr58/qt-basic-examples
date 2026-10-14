@@ -55,8 +55,11 @@ const char* claveRed    = "ESP32CUCEI$$";   // Contraseña del Access Point
 WebSocketsServer servidorSocket = WebSocketsServer(81);
 
 // ---------------------------------------------------------------------------
-// 3) Pin del servo: GPIO 18
-//    ¿Por que el 18?
+// 3) Pin del servo: GPIO 14
+//    ¿Por que el 14?
+//     - En la ESP32-S3-DevKitC-1 los ultimos pines del conector J1 son
+//       GPIO14, 5V y GND, en ese orden: el conector del SG90 (naranja, rojo,
+//       cafe) entra DIRECTO, sin protoboard ni cables extra.
 //     - NO es pin de arranque (strapping): 0, 3, 45 y 46 cambian el modo de
 //       arranque si tienen algo conectado al encender.
 //     - NO lo usa la PSRAM octal: en los modulos N8R8 / N16R8 los GPIO 35, 36
@@ -65,7 +68,7 @@ WebSocketsServer servidorSocket = WebSocketsServer(81);
 //     - NO choca con el TC4 (salidas 4..7, botones 0, 15 y 16, LED RGB 48),
 //       asi que el mismo protoboard del TC4 puede quedarse armado.
 // ---------------------------------------------------------------------------
-const int pinServo = 18;
+const int pinServo = 14;
 
 // Ancho de pulso del SG90 (microsegundos) para 0 y 180 grados.
 // Si tu servo no llega a los extremos o "zumba" en ellos, ajusta estos valores.

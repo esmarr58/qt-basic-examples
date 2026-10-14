@@ -46,13 +46,16 @@ TC05-Servo-WebSocket/
 
 ## Conexiones
 
-| Cable del SG90 | Va a |
-|---|---|
-| **Café** (GND) | GND de la ESP32 **y** GND de la fuente de 5 V (tierra común) |
-| **Rojo** (+5 V) | Fuente externa de 5 V, o el pin **5V** de la placa (ver advertencia) |
-| **Naranja** (señal) | **GPIO 18** |
+En la **ESP32-S3-DevKitC-1** los últimos tres pines del conector **J1** (lado del USB) son
+**GPIO14, 5V y GND**, en ese orden. El conector del SG90 entra **directo**, sin protoboard ni cables extra:
 
-**¿Por qué el GPIO 18?** No es pin de arranque (*strapping*: 0, 3, 45, 46), no lo ocupa la
+| Cable del SG90 | Pin de la placa (J1) |
+|---|---|
+| **Naranja** (señal) | **GPIO 14** |
+| **Rojo** (+5 V) | **5V** |
+| **Café** (GND) | **GND** |
+
+**¿Por qué el GPIO 14?** Además de quedar junto a 5V y GND, no es pin de arranque (*strapping*: 0, 3, 45, 46), no lo ocupa la
 PSRAM octal de los módulos N8R8 / N16R8 (GPIO 35, 36, 37), no es el USB nativo (19, 20) y no
 choca con los pines del TC4 (4–7, 0, 15, 16, 48), así que el protoboard del TC4 puede quedarse armado.
 
@@ -114,7 +117,7 @@ Ejemplo: si la interfaz manda `{"tipo":"servo","angulo":250}`, la ESP32 aplica 1
 
 | Síntoma | Causa probable / solución |
 |---|---|
-| El servo no se mueve, pero llega `servo_ack` | Falta la **tierra común** o el cable naranja no está en el GPIO 18. |
+| El servo no se mueve, pero llega `servo_ack` | El conector quedó desfasado un pin (el naranja debe quedar en **GPIO 14**, el rojo en 5V y el café en GND). |
 | La ESP32 se reinicia al mover el servo | Picos de corriente: usa fuente externa de 5 V y un capacitor. |
 | El servo zumba o vibra en 0° / 180° | Ajusta `pulsoMinimo` / `pulsoMaximo` (p. ej. 600 y 2300 µs). |
 | "Error de conexion" en Qt | IP equivocada, la ESP32 no está en la red del salón o la PC está en otra red. |
