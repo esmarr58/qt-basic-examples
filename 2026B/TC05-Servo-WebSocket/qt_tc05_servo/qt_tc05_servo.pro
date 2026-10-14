@@ -7,7 +7,8 @@
 #  Modulos de Qt que necesita el proyecto:
 #    core, gui, widgets -> aplicacion de escritorio con ventanas y widgets
 #    websockets         -> cliente WebSocket (QWebSocket)
-QT += core gui widgets websockets
+#    charts             -> grafica del potenciometro (QChart, QChartView)
+QT += core gui widgets websockets charts
 
 CONFIG += c++17
 

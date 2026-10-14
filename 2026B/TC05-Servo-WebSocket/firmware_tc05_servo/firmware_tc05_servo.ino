@@ -35,6 +35,10 @@
  *     {"tipo":"saludo",    "mensaje":"Servidor TC05 listo", "puerto":81, "angulo":90}
  *     {"tipo":"servo_ack", "angulo":90}             // a TODOS los clientes
  *     {"tipo":"error",     "mensaje":"..."}         // solo al que se equivoco
+ *     {"tipo":"pot", "valor":2048, "voltaje":1.65}  // cada 100 ms, a TODOS
+ *
+ *  POTENCIOMETRO (para la grafica de Qt Charts): extremos a 3V3 y GND, cursor
+ *  (pin central) al GPIO 8, que es una entrada analogica del ADC1.
  * ============================================================================
  */
 
@@ -74,6 +78,13 @@ const int pinServo = 14;
 // Si tu servo no llega a los extremos o "zumba" en ellos, ajusta estos valores.
 const int pulsoMinimo = 500;    // 0 grados
 const int pulsoMaximo = 2400;   // 180 grados
+
+// ---------------------------------------------------------------------------
+// Potenciometro en el GPIO 8 (ADC1, canal 7). 12 bits: 0..4095 -> 0..3.3 V
+// ---------------------------------------------------------------------------
+const int pinPot = 8;
+const unsigned long periodoPot = 100;     // milisegundos entre lecturas (10 por segundo)
+unsigned long marcaTiempoPot = 0;
 
 const int anguloMinimo = 0;
 const int anguloMaximo = 180;
@@ -239,8 +250,34 @@ void actualizarBarrido() {
 }
 
 // ---------------------------------------------------------------------------
+// Lee el potenciometro cada periodoPot ms y lo manda a TODOS los clientes
+// (sin bloquear: usa millis(), igual que el barrido)
+// ---------------------------------------------------------------------------
+void enviarPotenciometro() {
+  if (millis() - marcaTiempoPot < periodoPot) return;
+  marcaTiempoPot = millis();
+  if (servidorSocket.connectedClients() == 0) return;   // nadie escucha: no se manda
+
+  int lectura = analogRead(pinPot);                     // 0..4095
+  float voltaje = lectura * 3.3 / 4095.0;
+
+  JsonDocument documento;
+  documento["tipo"]    = "pot";
+  documento["valor"]   = lectura;
+  documento["voltaje"] = round(voltaje * 100) / 100.0;  // dos decimales
+
+  String texto;
+  serializeJson(documento, texto);
+  servidorSocket.broadcastTXT(texto);
+}
+
+// ---------------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
+
+  // Entrada analogica del potenciometro: 12 bits y rango completo de 0 a 3.3 V
+  analogReadResolution(12);
+  analogSetPinAttenuation(pinPot, ADC_11db);
 
   // Configurar el servo: 50 Hz y anchos de pulso del SG90
   ESP32PWM::allocateTimer(0);         // reserva un temporizador para el PWM
@@ -269,4 +306,5 @@ void setup() {
 void loop() {
   servidorSocket.loop();   // atiende a los clientes WebSocket (no bloquea)
   actualizarBarrido();     // avanza el barrido si esta activo
+  enviarPotenciometro();   // manda el potenciometro cada 100 ms
 }
