@@ -13,16 +13,13 @@ lo grafica en tiempo real con **Qt Charts**.
 
 ## Contenido
 
+> **La app de Qt no está en este repositorio:** la construyes tú, paso a paso, siguiendo la guía del TC05
+> (Word/PDF en Classroom). Aquí solo están el firmware de la ESP32-S3, el simulador y el diagrama.
+
 ```
 TC05-Servo-WebSocket/
 ├── firmware_tc05_servo/      # Firmware Arduino para la ESP32-S3-DevKitC-1
 │   └── firmware_tc05_servo.ino
-├── qt_tc05_servo/            # Proyecto Qt (cliente WebSocket)
-│   ├── qt_tc05_servo.pro
-│   ├── main.cpp
-│   ├── mainwindow.h
-│   ├── mainwindow.cpp
-│   └── mainwindow.ui
 ├── simulador_esp32.py        # Simulador del firmware para probar la app sin hardware
 ├── diagrama-bloques.tex      # Diagrama a bloques (TikZ)
 ├── diagrama-bloques.pdf
@@ -83,8 +80,7 @@ Nunca lo conectes a 5V: el ADC de la ESP32-S3 solo acepta hasta 3.3 V.
 1. En `firmware_tc05_servo.ino` revisa `nombreRed` y `claveRed` (Access Point del salón).
 2. Arduino IDE: placa **ESP32S3 Dev Module**, elige el puerto y carga el firmware.
    En el Monitor Serie (115200) aparece la **IP** de la ESP32. El servo arranca en **90°**.
-3. Abre `qt_tc05_servo/qt_tc05_servo.pro` en Qt Creator, elige el *kit* (Desktop Qt 6 MinGW),
-   compila y ejecuta.
+3. Crea tu propio proyecto en Qt Creator siguiendo la guía del TC05 (Pasos 3 a 7), compílalo y ejecútalo.
 4. Escribe la **IP** de la ESP32, puerto **81**, y presiona **Conectar**. Los controles del servo
    se activan solo cuando hay conexión.
 5. Mueve el **deslizador**: la etiqueta de la izquierda muestra el ángulo **pedido** y la de la derecha
