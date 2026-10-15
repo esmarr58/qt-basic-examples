@@ -80,7 +80,7 @@ Nunca lo conectes a 5V: el ADC de la ESP32-S3 solo acepta hasta 3.3 V.
 1. En `firmware_tc05_servo.ino` revisa `nombreRed` y `claveRed` (Access Point del salón).
 2. Arduino IDE: placa **ESP32S3 Dev Module**, elige el puerto y carga el firmware.
    En el Monitor Serie (115200) aparece la **IP** de la ESP32. El servo arranca en **90°**.
-3. Crea tu propio proyecto en Qt Creator siguiendo la guía del TC05 (Pasos 3 a 7), compílalo y ejecútalo.
+3. Crea tu propio proyecto en Qt Creator siguiendo la guía del TC05 (Pasos 2 a 7), compílalo y ejecútalo.
 4. Escribe la **IP** de la ESP32, puerto **81**, y presiona **Conectar**. Los controles del servo
    se activan solo cuando hay conexión.
 5. Mueve el **deslizador**: la etiqueta de la izquierda muestra el ángulo **pedido** y la de la derecha
