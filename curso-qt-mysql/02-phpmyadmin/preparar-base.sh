@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# preparar-base.sh — Curso de Qt Creator · Qt y MySQL
+# Crea (o reinicia) el punto de partida de los videos 3, 4 y 5: el usuario curso, la base tienda, la tabla productos y 100
+# productos de ejemplo. Equivale a lo que se hace a mano en phpMyAdmin en el video 2, con más datos.
+#
+# Uso:   bash preparar-base.sh          (pide tu contraseña de sudo; necesita MariaDB o MySQL en esta máquina)
+# Aviso: si la tabla productos ya existe, SE BORRA y se vuelve a crear con estos 100 productos.
+set -euo pipefail
+
+USUARIO="curso"
+CLAVE="curso1234"
+BASE="tienda"
+
+command -v mysql >/dev/null || { echo "No encuentro el cliente mysql. Instala MariaDB: sudo apt install mariadb-server"; exit 1; }
+
+TMP="$(mktemp /tmp/preparar-base.XXXXXX.sql)"
+cat > "$TMP" <<SQL
+CREATE DATABASE IF NOT EXISTS $BASE CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+CREATE USER IF NOT EXISTS '$USUARIO'@'localhost' IDENTIFIED BY '$CLAVE';
+GRANT ALL PRIVILEGES ON $BASE.* TO '$USUARIO'@'localhost';
+FLUSH PRIVILEGES;
+USE $BASE;
+DROP TABLE IF EXISTS productos;
+CREATE TABLE productos (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL,
+  precio DECIMAL(8,2) NOT NULL,
+  existencia INT NOT NULL,
+  categoria VARCHAR(30) NOT NULL,
+  codigo VARCHAR(13) NULL
+);
+-- 100 productos de ejemplo para la base tienda (los cuatro primeros son los del video 2)
+INSERT INTO productos (nombre, precio, existencia, categoria, codigo) VALUES
+('Lápiz', 5.50, 100, 'Papelería', NULL),
+('Cuaderno', 32.00, 40, 'Papelería', NULL),
+('Mochila', 450.00, 8, 'Accesorios', '7501234567890'),
+('Pluma', 12.90, 60, 'Papelería', NULL),
+('Separadores', 39.00, 30, 'Papelería', '7500000000053'),
+('Corrector líquido', 4.50, 12, 'Papelería', '7500000000060'),
+('Portalápices', 1910.00, 120, 'Oficina', '7500000000077'),
+('Adaptador HDMI', 1946.00, 150, 'Electrónica', '7500000000084'),
+('Regla 30 cm', 67.00, 20, 'Papelería', '7500000000091'),
+('Botella deportiva', 202.00, 150, 'Accesorios', '7500000000107'),
+('Block para acuarela', 215.00, 150, 'Arte', '7500000000114'),
+('Crayones 24', 146.00, 3, 'Papelería', '7500000000121'),
+('Libreta profesional', 150.00, 50, 'Papelería', '7500000000138'),
+('Hojas blancas 500', 84.00, 8, 'Papelería', '7500000000145'),
+('Pinceles set 6', 204.00, 200, 'Arte', '7500000000152'),
+('Multicontacto', 769.00, 15, 'Oficina', '7500000000169'),
+('Post-it 3x3', 174.00, 150, 'Papelería', '7500000000176'),
+('Plumones 10', 169.00, 30, 'Papelería', '7500000000183'),
+('Marcadores para pizarrón', 2622.00, 60, 'Oficina', '7500000000190'),
+('Compás', 20.00, 100, 'Papelería', '7500000000206'),
+('Llavero', 134.00, 0, 'Accesorios', '7500000000213'),
+('Caballete de mesa', 70.00, 120, 'Arte', '7500000000220'),
+('Pintura acrílica 6', 259.00, 5, 'Arte', '7500000000237'),
+('Cartera', 414.00, 20, 'Accesorios', '7500000000244'),
+('Marcador negro', 47.00, 3, 'Papelería', '7500000000251'),
+('Bolsa de tela', 500.00, 30, 'Accesorios', '7500000000268'),
+('Micrófono USB', 1634.00, 60, 'Electrónica', '7500000000275'),
+('Marcador rojo', 30.50, 50, 'Papelería', '7500000000282'),
+('Grapas caja 5000', 121.00, 150, 'Papelería', '7500000000299'),
+('Estuche', 125.00, 12, 'Papelería', '7500000000305'),
+('Memoria USB 64 GB', 1351.00, 150, 'Electrónica', '7500000000312'),
+('Sello de goma', 1715.00, 200, 'Oficina', '7500000000329'),
+('Calculadora científica', 761.00, 100, 'Electrónica', '7500000000336'),
+('Cordón para gafete', 449.00, 12, 'Accesorios', '7500000000343'),
+('Mouse inalámbrico', 1900.00, 40, 'Electrónica', '7500000000350'),
+('Cojín de tinta', 1485.00, 75, 'Oficina', '7500000000367'),
+('Cinta de empaque', 2348.00, 200, 'Oficina', '7500000000374'),
+('Tijeras escolares', 146.00, 75, 'Papelería', '7500000000381'),
+('Sobre tamaño carta', 5.50, 8, 'Papelería', '7500000000398'),
+('Cargador 20 W', 989.00, 5, 'Electrónica', '7500000000404'),
+('Extensión eléctrica', 173.00, 60, 'Oficina', '7500000000411'),
+('Webcam', 1583.00, 0, 'Electrónica', '7500000000428'),
+('Mochila con ruedas', 60.00, 150, 'Accesorios', '7500000000435'),
+('Block de notas', 61.00, 40, 'Papelería', '7500000000442'),
+('Minas 0.5', 83.00, 8, 'Papelería', '7500000000459'),
+('Teclado', 1239.00, 120, 'Electrónica', '7500000000466'),
+('Agenda 2026', 104.00, 15, 'Papelería', '7500000000473'),
+('Engrapadora', 30.00, 200, 'Papelería', '7500000000480'),
+('Hub USB 4 puertos', 568.00, 50, 'Electrónica', '7500000000497'),
+('Bolígrafo azul', 84.00, 25, 'Papelería', '7500000000503'),
+('Organizador de escritorio', 1976.00, 5, 'Oficina', '7500000000510'),
+('Lienzo 30x40', 246.00, 3, 'Arte', '7500000000527'),
+('Clips caja 100', 37.50, 15, 'Papelería', '7500000000534'),
+('Reloj de pared', 155.00, 3, 'Oficina', '7500000000541'),
+('Caja archivo', 1324.00, 20, 'Oficina', '7500000000558'),
+('Lápices de colores 12', 89.00, 0, 'Papelería', '7500000000565'),
+('Acuarelas 12', 85.00, 200, 'Arte', '7500000000572'),
+('Reloj de pulsera', 177.00, 200, 'Accesorios', '7500000000589'),
+('Bocina Bluetooth', 2157.00, 12, 'Electrónica', '7500000000596'),
+('Termo 500 ml', 142.00, 15, 'Accesorios', '7500000000602'),
+('Carboncillo', 185.00, 100, 'Arte', '7500000000619'),
+('Pluma fuente', 97.00, 5, 'Papelería', '7500000000626'),
+('Audífonos', 975.00, 15, 'Electrónica', '7500000000633'),
+('Juego de geometría', 64.00, 30, 'Papelería', '7500000000640'),
+('Papel kraft', 85.00, 100, 'Papelería', '7500000000657'),
+('Cartulina blanca', 54.00, 15, 'Papelería', '7500000000664'),
+('Resaltador amarillo', 61.00, 150, 'Papelería', '7500000000671'),
+('Gorra', 314.00, 200, 'Accesorios', '7500000000688'),
+('Cuaderno cuadrícula', 144.00, 30, 'Papelería', '7500000000695'),
+('Portafolio', 539.00, 20, 'Accesorios', '7500000000701'),
+('Cangurera', 185.00, 5, 'Accesorios', '7500000000718'),
+('Paraguas', 577.00, 50, 'Accesorios', '7500000000725'),
+('Etiquetas adhesivas', 75.00, 15, 'Papelería', '7500000000732'),
+('Estuche de lentes', 627.00, 60, 'Accesorios', '7500000000749'),
+('Perforadora', 153.00, 60, 'Papelería', '7500000000756'),
+('Plastilina 10', 251.00, 20, 'Arte', '7500000000763'),
+('Calendario de escritorio', 340.00, 30, 'Oficina', '7500000000770'),
+('Sacapuntas', 101.00, 20, 'Papelería', '7500000000787'),
+('Memoria USB 32 GB', 1406.00, 30, 'Electrónica', '7500000000794'),
+('Folder tamaño carta', 122.00, 12, 'Papelería', '7500000000800'),
+('Papel crepé', 21.00, 30, 'Papelería', '7500000000817'),
+('Pegamento en barra', 20.00, 100, 'Papelería', '7500000000824'),
+('Cuaderno rayado', 33.50, 3, 'Papelería', '7500000000831'),
+('Archivero de cartón', 2207.00, 15, 'Oficina', '7500000000848'),
+('Goma', 117.00, 8, 'Papelería', '7500000000855'),
+('Portaminas 0.5', 93.00, 30, 'Papelería', '7500000000862'),
+('Calculadora básica', 1449.00, 5, 'Electrónica', '7500000000879'),
+('Pizarrón blanco 60x90', 862.00, 50, 'Oficina', '7500000000886'),
+('Cable USB-C', 463.00, 30, 'Electrónica', '7500000000893'),
+('Disco SSD 480 GB', 235.00, 100, 'Electrónica', '7500000000909'),
+('Silla de oficina', 2516.00, 30, 'Oficina', '7500000000916'),
+('Gafete', 296.00, 0, 'Accesorios', '7500000000923'),
+('Tarjeta microSD 128 GB', 222.00, 25, 'Electrónica', '7500000000930'),
+('Bandeja de documentos', 91.00, 8, 'Oficina', '7500000000947'),
+('Borrador para pizarrón', 295.00, 60, 'Oficina', '7500000000954'),
+('Bolígrafo negro', 59.00, 120, 'Papelería', '7500000000961'),
+('Carpeta de argollas', 110.00, 3, 'Papelería', '7500000000978'),
+('Tabla de apoyo', 2684.00, 50, 'Oficina', '7500000000985'),
+('Lámpara LED de escritorio', 1494.00, 120, 'Electrónica', '7500000000992'),
+('Batería portátil', 1074.00, 8, 'Electrónica', '7500000001005');
+SQL
+
+echo "Creando la base $BASE, el usuario $USUARIO y la tabla productos (100 productos)..."
+sudo mysql --execute="source $TMP"      # el SQL va por archivo, no por stdin (así sudo puede pedir la contraseña)
+rm -f "$TMP"
+
+echo "Comprobando con el usuario $USUARIO:"
+mysql -u "$USUARIO" -p"$CLAVE" "$BASE" -e "SELECT COUNT(*) AS productos FROM productos; SELECT id, nombre, precio, existencia, categoria, codigo FROM productos LIMIT 5;"
+echo "Listo: base $BASE con 100 productos. Usuario $USUARIO / contraseña $CLAVE (solo para este curso)."

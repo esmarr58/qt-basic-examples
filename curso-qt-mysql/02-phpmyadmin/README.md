@@ -16,3 +16,16 @@ Estado final de la tabla `productos` (es el punto de partida de los videos 3, 4 
 | 4 | Pluma | 12.90 | 60 | Papelería | NULL |
 
 Para empezar de cero: `DROP DATABASE tienda;` y ejecutar `tienda.sql` en la pestaña SQL.
+
+## Punto de partida automático: `preparar-base.sh`
+
+Si no quieres repetir los clics del video (o quieres reiniciar la base), este script crea el usuario `curso`, la base `tienda`,
+la tabla `productos` y **100 productos** de ejemplo (los cuatro primeros son los de la tabla de arriba; el resto tiene
+`categoria` y un `codigo` de 13 dígitos). Es el punto de partida común de los videos 3, 4 y 5.
+
+```bash
+bash preparar-base.sh      # pide tu contraseña de sudo (usa «sudo mysql»); MariaDB o MySQL en la misma máquina
+```
+
+Aviso: si la tabla `productos` ya existe, la borra y la vuelve a crear. Los 100 INSERT están también en `productos_100.sql`
+(sirve para pegarlo en la pestaña SQL de phpMyAdmin).

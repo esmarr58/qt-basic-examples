@@ -6,7 +6,7 @@ el código corresponde a lo que se ve en cada video.
 | # | Carpeta | Tema |
 |---|---|---|
 | 1 | `01-driver-qmysql/` | Compilar el driver QMYSQL de Qt 6.12 con un script (`compilar-mysql-qt6.sh`, versión 2; cambia la línea 6 al actualizar Qt) y probarlo con un proyecto de consola |
-| 2 | `02-phpmyadmin/` | Base `tienda` y tabla `productos` en phpMyAdmin; SQL usado en el video |
+| 2 | `02-phpmyadmin/` | Base `tienda` y tabla `productos` en phpMyAdmin; SQL usado en el video; `preparar-base.sh` crea usuario, base, tabla y 100 productos (punto de partida de los videos 3–5) |
 | 3 | `03-leer-tabla/` | Proyecto `inventario`: leer la tabla en un QTableWidget |
 | 4 | `04-insertar/` | Insertar registros con prepare/bindValue |
 | 5 | `05-actualizar/` | Actualizar la fila elegida (y reto: eliminar) |
