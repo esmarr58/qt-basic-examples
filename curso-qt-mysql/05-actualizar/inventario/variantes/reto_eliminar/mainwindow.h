@@ -1,0 +1,35 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+
+QT_BEGIN_NAMESPACE
+namespace Ui {
+class MainWindow;
+}
+QT_END_NAMESPACE
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
+
+private slots:
+    void on_botonCargar_clicked();
+
+    void on_botonGuardar_clicked();
+
+    void on_tablaProductos_cellClicked(int row, int column);
+
+    void on_botonActualizar_clicked();
+
+    void on_botonEliminar_clicked();
+
+private:
+    Ui::MainWindow *ui;
+    int idSeleccionado = -1;
+};
+#endif // MAINWINDOW_H

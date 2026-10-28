@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>640</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Inventario</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="botonCargar">
+        <property name="text">
+         <string>Cargar productos</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="etiquetaEstado">
+        <property name="text">
+         <string>Sin conexión todavía.</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTableWidget" name="tablaProductos">
+      <column>
+       <property name="text">
+        <string>id</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>nombre</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>precio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>existencia</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>categoria</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
